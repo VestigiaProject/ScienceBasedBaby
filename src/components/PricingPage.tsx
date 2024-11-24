@@ -10,7 +10,7 @@ const plans = [
     name: 'Monthly',
     price: '$9.99',
     interval: 'month',
-    priceId: 'price_live_H5ggYwtDq4fbrJ',
+    priceId: 'price_1QOjlaIBNO0m5vVtNUYWIZJq',
     features: [
       'Evidence-based answers',
       'Scientific citations',
@@ -22,7 +22,7 @@ const plans = [
     name: 'Annual',
     price: '$99.99',
     interval: 'year',
-    priceId: 'price_live_H5ggYwtDq4fbrK',
+    priceId: 'price_1QOjm7IBNO0m5vVtkcKT2Tnz',
     features: [
       'Everything in Monthly',
       '2 months free',
@@ -42,7 +42,7 @@ export function PricingPage() {
       setIsLoading(priceId);
       setError(null);
 
-      const response = await fetch('/api/create-checkout-session', {
+      const response = await fetch('/.netlify/functions/create-checkout-session', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -54,17 +54,21 @@ export function PricingPage() {
         }),
       });
 
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to create checkout session');
+      }
+
       const { sessionId } = await response.json();
-      const stripe = await stripePromise;
       
+      const stripe = await stripePromise;
       if (!stripe) {
         throw new Error('Stripe failed to initialize');
       }
 
-      const { error } = await stripe.redirectToCheckout({ sessionId });
-      
-      if (error) {
-        throw error;
+      const { error: redirectError } = await stripe.redirectToCheckout({ sessionId });
+      if (redirectError) {
+        throw redirectError;
       }
     } catch (err) {
       console.error('Subscription error:', err);
