@@ -3,14 +3,14 @@ import { loadStripe } from '@stripe/stripe-js';
 import { Shield, Check } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 
-const stripePromise = loadStripe('pk_live_51QOikAIBNO0m5vVtnVOFpvGifoIW3rJTRIwKAy2qSoA1CELzLEG28tpBWThjeGFgHmphuKym3muiRiAPGvQVGR5T00lfflno8N');
+const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY || 'pk_test_51QOikAIBNO0m5vVtnVOFpvGifoIW3rJTRIwKAy2qSoA1CELzLEG28tpBWThjeGFgHmphuKym3muiRiAPGvQVGR5T00lfflno8N');
 
 const plans = [
   {
     name: 'Monthly',
     price: '$9.99',
     interval: 'month',
-    priceId: 'prod_RHIMijF5maYYSS',
+    priceId: 'price_1QOikAIBNO0m5vVtnVOFpvGif',
     features: [
       'Evidence-based answers',
       'Scientific citations',
@@ -22,7 +22,7 @@ const plans = [
     name: 'Annual',
     price: '$99.99',
     interval: 'year',
-    priceId: 'prod_RHIMCsn4ig0OXa',
+    priceId: 'price_1QOikAIBNO0m5vVtnVOFpvGig',
     features: [
       'Everything in Monthly',
       '2 months free',
@@ -55,7 +55,8 @@ export function PricingPage() {
       });
 
       if (!response.ok) {
-        throw new Error('Failed to create checkout session');
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to create checkout session');
       }
 
       const { sessionId } = await response.json();
@@ -65,10 +66,10 @@ export function PricingPage() {
         throw new Error('Stripe failed to load');
       }
 
-      const { error } = await stripe.redirectToCheckout({ sessionId });
+      const { error: checkoutError } = await stripe.redirectToCheckout({ sessionId });
       
-      if (error) {
-        throw error;
+      if (checkoutError) {
+        throw checkoutError;
       }
     } catch (err) {
       console.error('Subscription error:', err);
