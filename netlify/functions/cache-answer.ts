@@ -1,6 +1,7 @@
 import { Handler } from '@netlify/functions';
 import { Pinecone } from '@pinecone-database/pinecone';
 import OpenAI from 'openai';
+import { CachedAnswer } from '../types/answers';
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -37,13 +38,20 @@ export const handler: Handler = async (event) => {
       usage: embeddingResponse.usage
     });
 
+    // Serialize complex objects into strings for Pinecone metadata
+    const serializedMetadata = {
+      pros: answer.pros.join('|||'),
+      cons: answer.cons.join('|||'),
+      citations: JSON.stringify(answer.citations)
+    };
+
     const id = Buffer.from(query).toString('base64');
     console.log('💾 Upserting to Pinecone with ID:', id);
 
     await index.upsert([{
       id,
       values: embeddingResponse.data[0].embedding,
-      metadata: answer
+      metadata: serializedMetadata
     }]);
 
     console.log('✅ Successfully cached answer');

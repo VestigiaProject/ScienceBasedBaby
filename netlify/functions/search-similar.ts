@@ -1,6 +1,7 @@
 import { Handler } from '@netlify/functions';
 import { Pinecone } from '@pinecone-database/pinecone';
 import OpenAI from 'openai';
+import { CachedAnswer } from '../types/answers';
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -56,11 +57,22 @@ export const handler: Handler = async (event) => {
       threshold: SIMILARITY_THRESHOLD
     });
 
+    let answer: CachedAnswer | null = null;
+    if (hasSimilarAnswer && match.metadata) {
+      // Deserialize the metadata back into the original format
+      const metadata = match.metadata as any;
+      answer = {
+        pros: metadata.pros.split('|||'),
+        cons: metadata.cons.split('|||'),
+        citations: JSON.parse(metadata.citations)
+      };
+    }
+
     return {
       statusCode: 200,
       body: JSON.stringify({
         found: hasSimilarAnswer,
-        answer: hasSimilarAnswer ? match.metadata : null,
+        answer,
         score: match?.score,
         usage: embeddingResponse.usage
       })
