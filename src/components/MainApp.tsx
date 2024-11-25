@@ -28,7 +28,12 @@ export function MainApp() {
     citations: []
   });
 
-  const isCancelled = debugInfo?.subscriptionStatus === 'canceled' || debugInfo?.cancelAtPeriodEnd;
+  // Convert string 'false'/'true' to boolean
+  const isCancelled = debugInfo?.subscriptionStatus === 'canceled' || 
+    (typeof debugInfo?.cancelAtPeriodEnd === 'string' ? 
+      debugInfo.cancelAtPeriodEnd === 'true' : 
+      !!debugInfo?.cancelAtPeriodEnd);
+  
   const cancelButtonText = isCancelled ? 'Subscription Ending' : 'Cancel Subscription';
 
   const handleSearch = async (query: string) => {
@@ -111,6 +116,32 @@ export function MainApp() {
           </div>
         </div>
 
+        <div className="flex flex-col items-center gap-8">
+          <SearchBox onSearch={handleSearch} isLoading={isLoading} />
+          
+          {error && (
+            <ErrorDisplay 
+              message={error} 
+              onDismiss={() => setError(null)} 
+            />
+          )}
+          
+          {isLoading ? (
+            <div className="flex items-center gap-2">
+              <div className="w-5 h-5 border-t-2 border-blue-500 border-solid rounded-full animate-spin"></div>
+              <span className="text-gray-600">Analyzing scientific literature...</span>
+            </div>
+          ) : (
+            results && (results.pros.length > 0 || results.cons.length > 0) && (
+              <ResultsDisplay
+                pros={results.pros}
+                cons={results.cons}
+                citations={results.citations}
+              />
+            )
+          )}
+        </div>
+
         {showCancelConfirm && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
             <div className="bg-white rounded-lg p-6 max-w-md w-full">
@@ -142,32 +173,6 @@ export function MainApp() {
             </div>
           </div>
         )}
-
-        <div className="flex flex-col items-center gap-8">
-          <SearchBox onSearch={handleSearch} isLoading={isLoading} />
-          
-          {error && (
-            <ErrorDisplay 
-              message={error} 
-              onDismiss={() => setError(null)} 
-            />
-          )}
-          
-          {isLoading ? (
-            <div className="flex items-center gap-2">
-              <div className="w-5 h-5 border-t-2 border-blue-500 border-solid rounded-full animate-spin"></div>
-              <span className="text-gray-600">Analyzing scientific literature...</span>
-            </div>
-          ) : (
-            results && (results.pros.length > 0 || results.cons.length > 0) && (
-              <ResultsDisplay
-                pros={results.pros}
-                cons={results.cons}
-                citations={results.citations}
-              />
-            )
-          )}
-        </div>
       </div>
     </div>
   );
