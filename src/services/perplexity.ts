@@ -1,3 +1,5 @@
+import { checkQueryRelevancy } from './openai';
+
 interface PerplexityResponse {
   pros: string[];
   cons: string[];
@@ -38,10 +40,23 @@ CONS:
 CITATIONS:
 • List each scientific paper or medical journal referenced
 • One citation per line, starting with [number]
-• Include DOI or PubMed URL, which always has to be available (don't use citations if you can't fetch the url.).`;
+• Include DOI or PubMed URL when available.`;
+
+export class NotRelevantError extends Error {
+  constructor() {
+    super('Please only ask questions related to pregnancy and childcare.');
+    this.name = 'NotRelevantError';
+  }
+}
 
 export async function queryPerplexity(question: string): Promise<PerplexityResponse> {
   try {
+    // First, check if the query is relevant
+    const isRelevant = await checkQueryRelevancy(question);
+    if (!isRelevant) {
+      throw new NotRelevantError();
+    }
+
     console.log('Sending request to Perplexity API with question:', question);
     
     const response = await fetch('https://api.perplexity.ai/chat/completions', {
@@ -141,6 +156,9 @@ export async function queryPerplexity(question: string): Promise<PerplexityRespo
     
   } catch (error) {
     console.error('Error in queryPerplexity:', error);
+    if (error instanceof NotRelevantError) {
+      throw error;
+    }
     throw new Error(error instanceof Error ? error.message : 'Failed to get scientific analysis. Please try again.');
   }
 }

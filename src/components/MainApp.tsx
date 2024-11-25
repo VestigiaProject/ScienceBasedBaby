@@ -3,7 +3,7 @@ import { Baby, LogOut, AlertCircle } from 'lucide-react';
 import { SearchBox } from './SearchBox';
 import { ResultsDisplay } from './ResultsDisplay';
 import { ErrorDisplay } from './ErrorDisplay';
-import { queryPerplexity } from '../services/perplexity';
+import { queryPerplexity, NotRelevantError } from '../services/perplexity';
 import { useAuth } from '../contexts/AuthContext';
 import { useSubscription } from '../contexts/SubscriptionContext';
 
@@ -47,6 +47,9 @@ export function MainApp() {
       setResults(response);
     } catch (error) {
       console.error('Search error:', error);
+      if (error instanceof NotRelevantError) {
+        setResults({ pros: [], cons: [], citations: [] });
+      }
       setError(error instanceof Error ? error.message : 'An unexpected error occurred');
     } finally {
       setIsLoading(false);
