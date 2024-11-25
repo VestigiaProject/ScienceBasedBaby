@@ -9,9 +9,18 @@ import { useSubscription } from './contexts/SubscriptionContext';
 
 export default function App() {
   const { user, loading: authLoading } = useAuth();
-  const { hasActiveSubscription, loading: subscriptionLoading } = useSubscription();
+  const { hasActiveSubscription, loading: subscriptionLoading, debugInfo } = useSubscription();
 
-  // Show loading state while either auth or subscription status is being checked
+  // Log state changes
+  console.log('App render state:', {
+    user: user?.uid,
+    authLoading,
+    subscriptionLoading,
+    hasActiveSubscription,
+    debugInfo,
+    timestamp: new Date().toISOString()
+  });
+
   if (authLoading || subscriptionLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
