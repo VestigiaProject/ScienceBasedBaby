@@ -48,6 +48,7 @@ export const handler: Handler = async (event) => {
           hasActiveSubscription: false,
           subscriptionStatus: null,
           currentPeriodEnd: null,
+          cancelAtPeriodEnd: false,
           timestamp: Date.now()
         })
       };
@@ -62,6 +63,7 @@ export const handler: Handler = async (event) => {
     console.log('Subscription status check:', {
       status: subscription.status,
       currentPeriodEnd: subscription.currentPeriodEnd,
+      cancelAtPeriodEnd: subscription.cancelAtPeriodEnd,
       currentTime,
       hasActiveSubscription
     });
@@ -77,6 +79,7 @@ export const handler: Handler = async (event) => {
         hasActiveSubscription,
         subscriptionStatus: subscription.status,
         currentPeriodEnd: subscription.currentPeriodEnd,
+        cancelAtPeriodEnd: subscription.cancelAtPeriodEnd || false,
         timestamp: Date.now()
       })
     };
