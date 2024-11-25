@@ -55,38 +55,12 @@ export async function queryPerplexity(question: string): Promise<PerplexityRespo
     }
     console.log('❌ No cached answer found, proceeding with Perplexity API');
 
-    const response = await fetch('https://api.perplexity.ai/chat/completions', {
+    const response = await fetch('/.netlify/functions/query-perplexity', {
       method: 'POST',
       headers: {
-        'Accept': 'application/json',
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${import.meta.env.VITE_PERPLEXITY_API_KEY}`
       },
-      body: JSON.stringify({
-        model: 'llama-3.1-sonar-large-128k-online',
-        messages: [
-          { 
-            role: 'system', 
-            content: `You are a scientific research assistant specializing in pregnancy and parenting topics. 
-For the given question, look up evidence-based information ONLY from peer-reviewed scientific studies and medical research websites.
-Format your response EXACTLY as follows:
-
-PROS:
-• List each evidence-supported benefit or positive finding, with citation numbers in square brackets [1]
-• One point per line, starting with a bullet point, based on a scientific study.
-
-CONS:
-• List each evidence-supported risk or concern, with citation numbers in square brackets [1]
-• One point per line, starting with a bullet point, based on a scientific study.
-
-CITATIONS:
-• List each scientific paper or medical journal referenced
-• One citation per line, starting with [number]
-• Include DOI or PubMed URL when available.`
-          },
-          { role: 'user', content: question }
-        ]
-      })
+      body: JSON.stringify({ question })
     });
 
     console.log('API Response status:', response.status);
