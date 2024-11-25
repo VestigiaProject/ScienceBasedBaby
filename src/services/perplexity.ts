@@ -1,4 +1,5 @@
 import { checkQueryRelevancy } from './openai';
+import { findSimilarAnswer, cacheAnswer } from './pinecone';
 
 interface PerplexityResponse {
   pros: string[];
@@ -57,7 +58,14 @@ export async function queryPerplexity(question: string): Promise<PerplexityRespo
       throw new NotRelevantError();
     }
 
-    console.log('Sending request to Perplexity API with question:', question);
+    // Check for cached similar answer
+    const cachedAnswer = await findSimilarAnswer(question);
+    if (cachedAnswer) {
+      console.log('Using cached answer for similar question');
+      return cachedAnswer;
+    }
+
+    console.log('No cached answer found, querying Perplexity API');
     
     const response = await fetch('https://api.perplexity.ai/chat/completions', {
       method: 'POST',
@@ -150,6 +158,9 @@ export async function queryPerplexity(question: string): Promise<PerplexityRespo
         result[currentSection].push(...items);
       }
     });
+
+    // Cache the new answer
+    await cacheAnswer(question, result);
 
     console.log('Parsed result:', result);
     return result;
