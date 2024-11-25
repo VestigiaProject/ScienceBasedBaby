@@ -1,5 +1,4 @@
 import { Handler } from '@netlify/functions';
-import Stripe from 'stripe';
 import { initializeApp, getApps, cert } from 'firebase-admin/app';
 import { getFirestore } from 'firebase-admin/firestore';
 import { getAuth } from 'firebase-admin/auth';
@@ -10,65 +9,91 @@ if (!getApps().length) {
   });
 }
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: '2023-10-16',
-});
-
 const db = getFirestore();
 
 export const handler: Handler = async (event) => {
-  if (event.httpMethod !== 'POST') {
-    return { statusCode: 405, body: 'Method Not Allowed' };
-  }
-
   try {
     // Verify authentication
     const authHeader = event.headers.authorization;
     if (!authHeader?.startsWith('Bearer ')) {
-      return { statusCode: 401, body: JSON.stringify({ error: 'Unauthorized' }) };
+      console.log('Missing or invalid authorization header');
+      return { 
+        statusCode: 401, 
+        body: JSON.stringify({ error: 'Unauthorized' }) 
+      };
     }
 
     const token = authHeader.split('Bearer ')[1];
     const decodedToken = await getAuth().verifyIdToken(token);
     const userId = decodedToken.uid;
 
-    // Get subscription data from Firestore
+    console.log('Checking subscription for user:', userId);
+
+    // Get subscription data
     const subDoc = await db.collection('subscriptions').doc(userId).get();
     const subscription = subDoc.data();
 
-    if (!subscription?.subscriptionId) {
-      return { 
-        statusCode: 404, 
-        body: JSON.stringify({ error: 'No active subscription found' }) 
+    console.log('Retrieved subscription data:', subscription);
+
+    if (!subscription) {
+      console.log('No subscription found for user:', userId);
+      return {
+        statusCode: 200,
+        headers: {
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          'Pragma': 'no-cache',
+          'Expires': '0'
+        },
+        body: JSON.stringify({ 
+          hasActiveSubscription: false,
+          subscriptionStatus: null,
+          currentPeriodEnd: null,
+          cancelAtPeriodEnd: false,
+          timestamp: Date.now()
+        })
       };
     }
 
-    // Cancel the subscription at period end
-    const updatedSubscription = await stripe.subscriptions.update(
-      subscription.subscriptionId,
-      { cancel_at_period_end: true }
-    );
+    // Check if subscription is active and not expired
+    const currentTime = Date.now() / 1000;
+    const hasActiveSubscription = 
+      subscription.status === 'active' && 
+      subscription.currentPeriodEnd > currentTime;
 
-    // Update Firestore
-    await db.collection('subscriptions').doc(userId).update({
-      cancelAtPeriodEnd: true,
-      updatedAt: Date.now()
+    console.log('Subscription status check:', {
+      status: subscription.status,
+      currentPeriodEnd: subscription.currentPeriodEnd,
+      cancelAtPeriodEnd: subscription.cancelAtPeriodEnd,
+      currentTime,
+      hasActiveSubscription
     });
 
     return {
       statusCode: 200,
-      body: JSON.stringify({
-        message: 'Subscription will be canceled at the end of the billing period',
-        cancelAtPeriodEnd: true,
-        currentPeriodEnd: updatedSubscription.current_period_end
+      headers: {
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Pragma': 'no-cache',
+        'Expires': '0'
+      },
+      body: JSON.stringify({ 
+        hasActiveSubscription,
+        subscriptionStatus: subscription.status,
+        currentPeriodEnd: subscription.currentPeriodEnd,
+        cancelAtPeriodEnd: subscription.cancelAtPeriodEnd || false,
+        timestamp: Date.now()
       })
     };
   } catch (error) {
-    console.error('Error canceling subscription:', error);
+    console.error('Error checking subscription:', error);
     return {
       statusCode: 500,
+      headers: {
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Pragma': 'no-cache',
+        'Expires': '0'
+      },
       body: JSON.stringify({ 
-        error: 'Failed to cancel subscription',
+        error: 'Internal server error',
         details: error instanceof Error ? error.message : 'Unknown error'
       })
     };
