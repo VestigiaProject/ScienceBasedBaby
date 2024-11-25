@@ -25,24 +25,6 @@ interface PerplexityAPIResponse {
   created: number;
 }
 
-const PERPLEXITY_API_KEY = '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';
-const SYSTEM_PROMPT = `You are a scientific research assistant specializing in pregnancy and parenting topics. 
-For the given question, look up evidence-based information ONLY from peer-reviewed scientific studies and medical research websites.
-Format your response EXACTLY as follows:
-
-PROS:
-• List each evidence-supported benefit or positive finding, with citation numbers in square brackets [1]
-• One point per line, starting with a bullet point, based on a scientific study.
-
-CONS:
-• List each evidence-supported risk or concern, with citation numbers in square brackets [1]
-• One point per line, starting with a bullet point, based on a scientific study.
-
-CITATIONS:
-• List each scientific paper or medical journal referenced
-• One citation per line, starting with [number]
-• Include DOI or PubMed URL when available.`;
-
 export class NotRelevantError extends Error {
   constructor() {
     super('Please only ask questions related to pregnancy and childcare.');
@@ -52,21 +34,27 @@ export class NotRelevantError extends Error {
 
 export async function queryPerplexity(question: string): Promise<PerplexityResponse> {
   try {
+    console.log('🔍 Starting query process for:', question);
+    
     // First, check if the query is relevant
-    const isRelevant = await checkQueryRelevancy(question);
-    if (!isRelevant) {
+    console.log('Checking query relevancy...');
+    const relevancyResponse = await checkQueryRelevancy(question);
+    console.log('Relevancy check result:', relevancyResponse);
+    
+    if (!relevancyResponse.isRelevant) {
+      console.log('❌ Query deemed not relevant');
       throw new NotRelevantError();
     }
 
     // Check for cached similar answer
+    console.log('🔍 Searching for cached similar answers...');
     const cachedAnswer = await findSimilarAnswer(question);
     if (cachedAnswer) {
-      console.log('Using cached answer for similar question');
+      console.log('✅ Found cached answer:', cachedAnswer);
       return cachedAnswer;
     }
+    console.log('❌ No cached answer found, proceeding with Perplexity API');
 
-    console.log('No cached answer found, querying Perplexity API');
-    
     const response = await fetch('https://api.perplexity.ai/chat/completions', {
       method: 'POST',
       headers: {
@@ -159,14 +147,17 @@ export async function queryPerplexity(question: string): Promise<PerplexityRespo
       }
     });
 
-    // Cache the new answer
-    await cacheAnswer(question, result);
+    console.log('📝 Parsed result:', result);
 
-    console.log('Parsed result:', result);
+    // Cache the new answer
+    console.log('💾 Caching new answer...');
+    await cacheAnswer(question, result);
+    console.log('✅ Answer cached successfully');
+
     return result;
     
   } catch (error) {
-    console.error('Error in queryPerplexity:', error);
+    console.error('❌ Error in queryPerplexity:', error);
     if (error instanceof NotRelevantError) {
       throw error;
     }

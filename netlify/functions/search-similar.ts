@@ -20,24 +20,31 @@ export const handler: Handler = async (event) => {
   }
 
   try {
+    console.log('🔍 Starting similar search...');
     const { query } = JSON.parse(event.body || '');
 
     if (!query) {
+      console.log('❌ No query provided');
       return {
         statusCode: 400,
         body: JSON.stringify({ error: 'Query is required' })
       };
     }
 
-    // Generate embedding for the query
+    console.log('📝 Generating embedding for query:', query);
     const embeddingResponse = await openai.embeddings.create({
       input: query,
       model: 'text-embedding-3-small'
     });
     
+    console.log('✅ Embedding generated:', {
+      dimensions: embeddingResponse.data[0].embedding.length,
+      usage: embeddingResponse.usage
+    });
+    
     const queryEmbedding = embeddingResponse.data[0].embedding;
 
-    // Search for similar vectors
+    console.log('🔍 Searching Pinecone index...');
     const queryResponse = await index.query({
       vector: queryEmbedding,
       topK: 1,
@@ -46,6 +53,12 @@ export const handler: Handler = async (event) => {
 
     const match = queryResponse.matches[0];
     const hasSimilarAnswer = match && match.score! >= SIMILARITY_THRESHOLD;
+
+    console.log('📊 Search results:', {
+      found: hasSimilarAnswer,
+      score: match?.score,
+      threshold: SIMILARITY_THRESHOLD
+    });
 
     return {
       statusCode: 200,
@@ -57,7 +70,7 @@ export const handler: Handler = async (event) => {
       })
     };
   } catch (error) {
-    console.error('Similar search error:', error);
+    console.error('❌ Similar search error:', error);
     return {
       statusCode: 500,
       body: JSON.stringify({ 

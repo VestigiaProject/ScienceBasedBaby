@@ -19,27 +19,38 @@ export const handler: Handler = async (event) => {
   }
 
   try {
+    console.log('💾 Starting answer caching...');
     const { query, answer } = JSON.parse(event.body || '');
 
     if (!query || !answer) {
+      console.log('❌ Missing query or answer');
       return {
         statusCode: 400,
         body: JSON.stringify({ error: 'Query and answer are required' })
       };
     }
 
-    // Generate embedding for the query
+    console.log('📝 Generating embedding for caching:', query);
     const embeddingResponse = await openai.embeddings.create({
       input: query,
       model: 'text-embedding-3-small'
     });
 
-    // Store in Pinecone
+    console.log('✅ Embedding generated:', {
+      dimensions: embeddingResponse.data[0].embedding.length,
+      usage: embeddingResponse.usage
+    });
+
+    const id = Buffer.from(query).toString('base64');
+    console.log('💾 Upserting to Pinecone with ID:', id);
+
     await index.upsert([{
-      id: Buffer.from(query).toString('base64'),
+      id,
       values: embeddingResponse.data[0].embedding,
       metadata: answer
     }]);
+
+    console.log('✅ Successfully cached answer');
 
     return {
       statusCode: 200,
@@ -49,7 +60,7 @@ export const handler: Handler = async (event) => {
       })
     };
   } catch (error) {
-    console.error('Cache answer error:', error);
+    console.error('❌ Cache answer error:', error);
     return {
       statusCode: 500,
       body: JSON.stringify({ 
