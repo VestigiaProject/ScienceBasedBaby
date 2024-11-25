@@ -3,7 +3,7 @@ import { checkQueryRelevancy } from './openai';
 import { NotRelevantError } from './errors';
 import { CachedAnswer } from '../types/answers';
 
-function parsePerplexityResponse(content: string): CachedAnswer {
+function parsePerplexityResponse(content: string, rawResponse: any): CachedAnswer {
   const sections = content.split('###').filter(Boolean);
   const result: CachedAnswer = {
     pros: [],
@@ -11,6 +11,7 @@ function parsePerplexityResponse(content: string): CachedAnswer {
     citations: []
   };
 
+  // Parse content sections
   sections.forEach(section => {
     const lines = section.trim().split('\n').filter(Boolean);
     const header = lines[0].toLowerCase();
@@ -18,31 +19,38 @@ function parsePerplexityResponse(content: string): CachedAnswer {
 
     if (header.includes('pros')) {
       result.pros = lines
-        .filter(line => line.startsWith('-'))
-        .map(line => line.replace(/^-\s*/, '').trim());
+        .filter(line => line.startsWith('-') || line.startsWith('•'))
+        .map(line => line.replace(/^[-•]\s*/, '').trim());
     } else if (header.includes('cons')) {
       result.cons = lines
-        .filter(line => line.startsWith('-'))
-        .map(line => line.replace(/^-\s*/, '').trim());
+        .filter(line => line.startsWith('-') || line.startsWith('•'))
+        .map(line => line.replace(/^[-•]\s*/, '').trim());
     } else if (header.includes('citations')) {
-      result.citations = lines
-        .filter(line => line.startsWith('['))
-        .map(line => {
-          const match = line.match(/\[(\d+)\]\s*-\s*(.+?)(?:\s*\(|$)/);
-          if (!match) return null;
+      const citationLines = lines.filter(line => line.startsWith('['));
+      result.citations = citationLines.map((line, index) => {
+        const match = line.match(/\[(\d+)\]\s*-?\s*(.+?)(?:\s*\(|$)/);
+        if (!match) return null;
 
-          const [, idStr, text] = match;
-          const url = line.includes('http') ? line.match(/(https?:\/\/[^\s)]+)/)?.[0] : undefined;
+        const [, idStr, text] = match;
+        const url = line.includes('http') ? line.match(/(https?:\/\/[^\s)]+)/)?.[0] : undefined;
 
-          return {
-            id: parseInt(idStr, 10),
-            text: text.trim(),
-            url
-          };
-        })
-        .filter((citation): citation is NonNullable<typeof citation> => citation !== null);
+        return {
+          id: parseInt(idStr, 10),
+          text: text.trim(),
+          url: url || rawResponse?.citations?.[index] || undefined
+        };
+      }).filter((citation): citation is NonNullable<typeof citation> => citation !== null);
     }
   });
+
+  // If no citations were parsed from content but raw citations exist, use those
+  if (result.citations.length === 0 && rawResponse?.citations?.length > 0) {
+    result.citations = rawResponse.citations.map((url: string, index: number) => ({
+      id: index + 1,
+      text: url.split('/').slice(-1)[0].replace(/-/g, ' '),
+      url
+    }));
+  }
 
   return result;
 }
@@ -93,7 +101,7 @@ export async function queryPerplexity(question: string): Promise<CachedAnswer> {
       throw new Error('Invalid response format from API');
     }
 
-    const result = parsePerplexityResponse(data.choices[0].message.content);
+    const result = parsePerplexityResponse(data.choices[0].message.content, data);
     console.log('📝 Parsed result:', result);
 
     // Validate parsed result
