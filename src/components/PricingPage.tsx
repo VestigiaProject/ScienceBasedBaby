@@ -11,7 +11,7 @@ const plans = [
     name: 'Monthly',
     price: '$9.99',
     interval: 'month',
-    priceId: 'price_1QOjlaIBNO0m5vVtNUYWIZJq',
+    priceId: 'price_1QOvt8IBNO0m5vVt0tlV9oQQ', //Live: price_1QOjlaIBNO0m5vVtNUYWIZJq
     features: [
       'Evidence-based answers',
       'Scientific citations',
@@ -23,7 +23,7 @@ const plans = [
     name: 'Annual',
     price: '$99.99',
     interval: 'year',
-    priceId: 'price_1QOjm7IBNO0m5vVtkcKT2Tnz',
+    priceId: 'price_1QOvtLIBNO0m5vVt3CCrZt1h', //Live: price_1QOjm7IBNO0m5vVtkcKT2Tnz
     features: [
       'Everything in Monthly',
       '2 months free',
