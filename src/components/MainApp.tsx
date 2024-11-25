@@ -9,7 +9,7 @@ import { useSubscription } from '../contexts/SubscriptionContext';
 
 export function MainApp() {
   const { user, logout } = useAuth();
-  const { refreshSubscription } = useSubscription();
+  const { refreshSubscription, debugInfo } = useSubscription();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
@@ -27,6 +27,9 @@ export function MainApp() {
     cons: [],
     citations: []
   });
+
+  const isCancelled = debugInfo?.subscriptionStatus === 'canceled' || debugInfo?.cancelAtPeriodEnd;
+  const cancelButtonText = isCancelled ? 'Subscription Ending' : 'Cancel Subscription';
 
   const handleSearch = async (query: string) => {
     setIsLoading(true);
@@ -54,7 +57,7 @@ export function MainApp() {
   };
 
   const handleCancelSubscription = async () => {
-    if (!user) return;
+    if (!user || isCancelled) return;
     
     setCancelLoading(true);
     try {
@@ -87,16 +90,16 @@ export function MainApp() {
         <div className="flex justify-between items-center mb-12">
           <div className="flex items-center gap-3">
             <Baby className="w-10 h-10 text-blue-500" />
-            <h1 className="text-3xl font-bold text-gray-800">Scientific Parenting Advisor</h1>
+            <h1 className="text-3xl font-bold text-gray-800">Science-Based Baby</h1>
           </div>
           <div className="flex items-center gap-4">
             <span className="text-gray-600">{user?.email}</span>
             <button
-              onClick={() => setShowCancelConfirm(true)}
-              className="px-4 py-2 text-red-600 hover:text-red-700 font-medium"
-              disabled={cancelLoading}
+              onClick={() => !isCancelled && setShowCancelConfirm(true)}
+              className="px-4 py-2 text-gray-500 hover:text-gray-700 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+              disabled={cancelLoading || isCancelled}
             >
-              {cancelLoading ? 'Canceling...' : 'Cancel Subscription'}
+              {cancelLoading ? 'Canceling...' : cancelButtonText}
             </button>
             <button
               onClick={handleLogout}
