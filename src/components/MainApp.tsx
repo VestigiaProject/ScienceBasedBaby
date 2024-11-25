@@ -41,7 +41,7 @@ export function MainApp() {
     setIsLoading(true);
     setError(null);
     try {
-      const enhancedQuery = `${query} Only search answers in scientific publications. inurl:pubmed.ncbi.nlm.nih.gov`;
+      const enhancedQuery = `The user has asked something about: "${query}" Give the pros and cons after having searched answers in scientific and peer-reviewed publications exclusively, not low-quality media. inurl:pubmed.ncbi.nlm.nih.gov`;
       console.log('Starting search with query:', query);
       const response = await queryPerplexity(enhancedQuery);
       console.log('Setting results:', response);
