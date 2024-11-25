@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { loadStripe } from '@stripe/stripe-js';
 import { Shield, Check } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
+import { useSubscription } from '../contexts/SubscriptionContext';
 
 const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY);
 
@@ -34,6 +35,7 @@ const plans = [
 
 export function PricingPage() {
   const { user } = useAuth();
+  const { refreshSubscription } = useSubscription();
   const [isLoading, setIsLoading] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -66,10 +68,13 @@ export function PricingPage() {
         throw new Error('Stripe failed to initialize');
       }
 
+      // Refresh subscription status after successful checkout
       const { error: redirectError } = await stripe.redirectToCheckout({ sessionId });
       if (redirectError) {
         throw redirectError;
       }
+
+      await refreshSubscription();
     } catch (err) {
       console.error('Subscription error:', err);
       setError(err instanceof Error ? err.message : 'Failed to start subscription');
