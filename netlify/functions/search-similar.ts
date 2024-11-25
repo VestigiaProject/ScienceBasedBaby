@@ -54,7 +54,9 @@ export const handler: Handler = async (event) => {
     console.log('📊 Search results:', {
       found: hasSimilarAnswer,
       score: match?.score,
-      threshold: SIMILARITY_THRESHOLD
+      threshold: SIMILARITY_THRESHOLD,
+      matchedQuery: match?.metadata?.query,
+      timestamp: match?.metadata?.timestamp
     });
 
     let answer: CachedAnswer | null = null;
@@ -74,6 +76,8 @@ export const handler: Handler = async (event) => {
         found: hasSimilarAnswer,
         answer,
         score: match?.score,
+        matchedQuery: match?.metadata?.query,
+        timestamp: match?.metadata?.timestamp,
         usage: embeddingResponse.usage
       })
     };

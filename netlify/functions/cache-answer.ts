@@ -40,9 +40,11 @@ export const handler: Handler = async (event) => {
 
     // Serialize complex objects into strings for Pinecone metadata
     const serializedMetadata = {
+      query: query, // Store the original query
       pros: answer.pros.join('|||'),
       cons: answer.cons.join('|||'),
-      citations: JSON.stringify(answer.citations)
+      citations: JSON.stringify(answer.citations),
+      timestamp: new Date().toISOString() // Also add timestamp for tracking
     };
 
     const id = Buffer.from(query).toString('base64');
