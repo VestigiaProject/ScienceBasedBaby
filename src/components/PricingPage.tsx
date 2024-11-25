@@ -90,7 +90,7 @@ export function PricingPage() {
           <Shield className="mx-auto h-12 w-12 text-blue-500" />
           <h2 className="mt-2 text-3xl font-bold text-gray-900">Choose Your Plan</h2>
           <p className="mt-4 text-xl text-gray-600">
-            Get evidence-based answers to your parenting questions
+            Compare evidence-based answers to your parenting questions
           </p>
         </div>
 

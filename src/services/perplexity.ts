@@ -38,7 +38,7 @@ CONS:
 CITATIONS:
 • List each scientific paper or medical journal referenced
 • One citation per line, starting with [number]
-• Include DOI or PubMed URL when available.`;
+• Include DOI or PubMed URL, which always has to be available (don't use citations if you can't fetch the url.).`;
 
 export async function queryPerplexity(question: string): Promise<PerplexityResponse> {
   try {

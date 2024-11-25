@@ -28,7 +28,7 @@ export function MainApp() {
     setIsLoading(true);
     setError(null);
     try {
-      const enhancedQuery = `${query} Only search answers in scientific publications. inurl:pubmed.ncbi.nlm.nih.gov`;
+      const enhancedQuery = `${query} Only search answers in scientific publications, only add citations where we can fetch the url. inurl:pubmed.ncbi.nlm.nih.gov`;
       console.log('Starting search with query:', query);
       const response = await queryPerplexity(enhancedQuery);
       console.log('Setting results:', response);
@@ -55,7 +55,7 @@ export function MainApp() {
         <div className="flex justify-between items-center mb-12">
           <div className="flex items-center gap-3">
             <Baby className="w-10 h-10 text-blue-500" />
-            <h1 className="text-3xl font-bold text-gray-800">Scientific Parenting Advisor</h1>
+            <h1 className="text-3xl font-bold text-gray-800">Science-Based Baby</h1>
           </div>
           <div className="flex items-center gap-4">
             <span className="text-gray-600">{user?.email}</span>

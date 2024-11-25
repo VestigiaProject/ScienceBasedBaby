@@ -20,9 +20,9 @@ export function LoginPage() {
           <div className="flex justify-center mb-4">
             <Baby className="w-16 h-16 text-blue-500" />
           </div>
-          <h2 className="text-3xl font-bold text-gray-900">Scientific Parenting Advisor</h2>
+          <h2 className="text-3xl font-bold text-gray-900">Science-Based Baby</h2>
           <p className="mt-2 text-gray-600">
-            Access evidence-based answers to your pregnancy and parenting questions
+            Compare evidence-based answers to your pregnancy and parenting questions
           </p>
         </div>
 
