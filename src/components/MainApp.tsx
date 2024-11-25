@@ -1,15 +1,19 @@
 import React, { useState } from 'react';
-import { Baby, LogOut } from 'lucide-react';
+import { Baby, LogOut, AlertCircle } from 'lucide-react';
 import { SearchBox } from './SearchBox';
 import { ResultsDisplay } from './ResultsDisplay';
 import { ErrorDisplay } from './ErrorDisplay';
 import { queryPerplexity } from '../services/perplexity';
 import { useAuth } from '../contexts/AuthContext';
+import { useSubscription } from '../contexts/SubscriptionContext';
 
 export function MainApp() {
   const { user, logout } = useAuth();
+  const { refreshSubscription } = useSubscription();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showCancelConfirm, setShowCancelConfirm] = useState(false);
+  const [cancelLoading, setCancelLoading] = useState(false);
   const [results, setResults] = useState<{
     pros: string[];
     cons: string[];
@@ -28,7 +32,7 @@ export function MainApp() {
     setIsLoading(true);
     setError(null);
     try {
-      const enhancedQuery = `${query} Only search answers in scientific publications, only add citations where we can fetch the url. inurl:pubmed.ncbi.nlm.nih.gov`;
+      const enhancedQuery = `${query} Only search answers in scientific publications. inurl:pubmed.ncbi.nlm.nih.gov`;
       console.log('Starting search with query:', query);
       const response = await queryPerplexity(enhancedQuery);
       console.log('Setting results:', response);
@@ -49,16 +53,51 @@ export function MainApp() {
     }
   };
 
+  const handleCancelSubscription = async () => {
+    if (!user) return;
+    
+    setCancelLoading(true);
+    try {
+      const token = await user.getIdToken();
+      const response = await fetch('/.netlify/functions/cancel-subscription', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to cancel subscription');
+      }
+
+      await refreshSubscription();
+      setShowCancelConfirm(false);
+      setError('Your subscription will be canceled at the end of the billing period.');
+    } catch (err) {
+      setError('Failed to cancel subscription. Please try again.');
+    } finally {
+      setCancelLoading(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="container mx-auto px-4 py-8">
         <div className="flex justify-between items-center mb-12">
           <div className="flex items-center gap-3">
             <Baby className="w-10 h-10 text-blue-500" />
-            <h1 className="text-3xl font-bold text-gray-800">Science-Based Baby</h1>
+            <h1 className="text-3xl font-bold text-gray-800">Scientific Parenting Advisor</h1>
           </div>
           <div className="flex items-center gap-4">
             <span className="text-gray-600">{user?.email}</span>
+            <button
+              onClick={() => setShowCancelConfirm(true)}
+              className="px-4 py-2 text-red-600 hover:text-red-700 font-medium"
+              disabled={cancelLoading}
+            >
+              {cancelLoading ? 'Canceling...' : 'Cancel Subscription'}
+            </button>
             <button
               onClick={handleLogout}
               className="flex items-center gap-2 px-4 py-2 text-gray-700 hover:text-gray-900"
@@ -68,6 +107,38 @@ export function MainApp() {
             </button>
           </div>
         </div>
+
+        {showCancelConfirm && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
+            <div className="bg-white rounded-lg p-6 max-w-md w-full">
+              <div className="flex items-start gap-3 mb-4">
+                <AlertCircle className="w-6 h-6 text-red-500 flex-shrink-0" />
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900">Cancel Subscription?</h3>
+                  <p className="mt-2 text-gray-600">
+                    Your subscription will remain active until the end of the current billing period. After that, you'll lose access to the service.
+                  </p>
+                </div>
+              </div>
+              <div className="flex justify-end gap-3 mt-6">
+                <button
+                  onClick={() => setShowCancelConfirm(false)}
+                  className="px-4 py-2 text-gray-600 hover:text-gray-700"
+                  disabled={cancelLoading}
+                >
+                  Keep Subscription
+                </button>
+                <button
+                  onClick={handleCancelSubscription}
+                  className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 disabled:opacity-50"
+                  disabled={cancelLoading}
+                >
+                  {cancelLoading ? 'Canceling...' : 'Confirm Cancellation'}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         <div className="flex flex-col items-center gap-8">
           <SearchBox onSearch={handleSearch} isLoading={isLoading} />
