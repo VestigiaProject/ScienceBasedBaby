@@ -9,7 +9,7 @@ const openai = new OpenAI({
 
 const pc = new Pinecone();
 const index = pc.index(process.env.PINECONE_INDEX!);
-const SIMILARITY_THRESHOLD = 0.85;
+const SIMILARITY_THRESHOLD = 0.90;
 
 export const handler: Handler = async (event) => {
   if (event.httpMethod !== 'POST') {
