@@ -34,46 +34,89 @@ export const handler: Handler = async (event) => {
 
     console.log('Webhook event type:', stripeEvent.type);
 
-    // Handle subscription events
-    if (stripeEvent.type === 'customer.subscription.created' ||
-        stripeEvent.type === 'customer.subscription.updated' ||
-        stripeEvent.type === 'customer.subscription.deleted') {
-      const subscription = stripeEvent.data.object as Stripe.Subscription;
-      
-      // Get customer ID
-      const customerId = subscription.customer as string;
-      
-      // Retrieve customer to get metadata
-      const customer = await stripe.customers.retrieve(customerId);
-      console.log('Customer data:', customer);
-      
-      // Get userId from customer metadata
-      const userId = typeof customer === 'object' && !('deleted' in customer) ? 
-        customer.metadata.userId : null;
+    // Handle various subscription and payment events
+    switch (stripeEvent.type) {
+      case 'customer.subscription.created':
+      case 'customer.subscription.updated':
+      case 'customer.subscription.deleted':
+      case 'invoice.paid':
+      case 'invoice.payment_failed': {
+        const subscription = stripeEvent.type.startsWith('invoice.') 
+          ? (stripeEvent.data.object as Stripe.Invoice).subscription
+          : (stripeEvent.data.object as Stripe.Subscription).id;
 
-      if (!userId) {
-        console.error('No userId found in customer metadata');
-        return {
-          statusCode: 400,
-          body: JSON.stringify({ error: 'No userId found in customer metadata' }),
-        };
+        if (typeof subscription === 'string') {
+          // Fetch full subscription details
+          const subscriptionData = await stripe.subscriptions.retrieve(subscription);
+          
+          // Get customer ID
+          const customerId = subscriptionData.customer as string;
+          
+          // Retrieve customer to get metadata
+          const customer = await stripe.customers.retrieve(customerId);
+          console.log('Customer data:', customer);
+          
+          // Get userId from customer metadata
+          const userId = typeof customer === 'object' && !('deleted' in customer) ? 
+            customer.metadata.userId : null;
+
+          if (!userId) {
+            console.error('No userId found in customer metadata');
+            return {
+              statusCode: 400,
+              body: JSON.stringify({ error: 'No userId found in customer metadata' }),
+            };
+          }
+
+          console.log('Updating subscription for user:', userId, 'Status:', subscriptionData.status);
+
+          // Update Firestore with comprehensive subscription data
+          await db.collection('subscriptions').doc(userId).set({
+            subscriptionId: subscriptionData.id,
+            customerId: customerId,
+            status: subscriptionData.status,
+            priceId: subscriptionData.items.data[0].price.id,
+            currentPeriodStart: subscriptionData.current_period_start,
+            currentPeriodEnd: subscriptionData.current_period_end,
+            cancelAtPeriodEnd: subscriptionData.cancel_at_period_end,
+            updatedAt: Date.now(),
+            lastEventType: stripeEvent.type,
+            lastInvoiceStatus: stripeEvent.type.startsWith('invoice.') 
+              ? (stripeEvent.data.object as Stripe.Invoice).status 
+              : null
+          }, { merge: true });
+
+          console.log('Successfully updated subscription in Firestore');
+        }
+        break;
       }
 
-      console.log('Updating subscription for user:', userId, 'Status:', subscription.status);
-
-      // Update Firestore
-      await db.collection('subscriptions').doc(userId).set({
-        subscriptionId: subscription.id,
-        customerId: customerId,
-        status: subscription.status,
-        priceId: subscription.items.data[0].price.id,
-        currentPeriodStart: subscription.current_period_start,
-        currentPeriodEnd: subscription.current_period_end,
-        cancelAtPeriodEnd: subscription.cancel_at_period_end,
-        updatedAt: Date.now(),
-      }, { merge: true });
-
-      console.log('Successfully updated subscription in Firestore');
+      case 'checkout.session.completed': {
+        const session = stripeEvent.data.object as Stripe.Checkout.Session;
+        if (session.mode === 'subscription') {
+          const subscription = await stripe.subscriptions.retrieve(session.subscription as string);
+          const customer = await stripe.customers.retrieve(session.customer as string);
+          
+          if (typeof customer === 'object' && !('deleted' in customer)) {
+            const userId = customer.metadata.userId;
+            
+            console.log('Checkout completed for user:', userId, 'Subscription:', subscription.id);
+            
+            await db.collection('subscriptions').doc(userId).set({
+              subscriptionId: subscription.id,
+              customerId: customer.id,
+              status: subscription.status,
+              priceId: subscription.items.data[0].price.id,
+              currentPeriodStart: subscription.current_period_start,
+              currentPeriodEnd: subscription.current_period_end,
+              cancelAtPeriodEnd: subscription.cancel_at_period_end,
+              updatedAt: Date.now(),
+              lastEventType: stripeEvent.type
+            }, { merge: true });
+          }
+        }
+        break;
+      }
     }
 
     return {
