@@ -25,24 +25,55 @@ export const handler: Handler = async (event) => {
   const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET!;
 
   try {
-    const event = stripe.webhooks.constructEvent(
+    console.log('Received webhook event');
+    const stripeEvent = stripe.webhooks.constructEvent(
       event.body!,
       sig,
       webhookSecret
     );
 
-    // Handle subscription events
-    if (event.type === 'customer.subscription.created' ||
-        event.type === 'customer.subscription.updated') {
-      const subscription = event.data.object as Stripe.Subscription;
-      const userId = subscription.metadata.userId;
+    console.log('Webhook event type:', stripeEvent.type);
 
+    // Handle subscription events
+    if (stripeEvent.type === 'customer.subscription.created' ||
+        stripeEvent.type === 'customer.subscription.updated' ||
+        stripeEvent.type === 'customer.subscription.deleted') {
+      const subscription = stripeEvent.data.object as Stripe.Subscription;
+      
+      // Get customer ID
+      const customerId = subscription.customer as string;
+      
+      // Retrieve customer to get metadata
+      const customer = await stripe.customers.retrieve(customerId);
+      console.log('Customer data:', customer);
+      
+      // Get userId from customer metadata
+      const userId = typeof customer === 'object' && !('deleted' in customer) ? 
+        customer.metadata.userId : null;
+
+      if (!userId) {
+        console.error('No userId found in customer metadata');
+        return {
+          statusCode: 400,
+          body: JSON.stringify({ error: 'No userId found in customer metadata' }),
+        };
+      }
+
+      console.log('Updating subscription for user:', userId, 'Status:', subscription.status);
+
+      // Update Firestore
       await db.collection('subscriptions').doc(userId).set({
         subscriptionId: subscription.id,
+        customerId: customerId,
         status: subscription.status,
+        priceId: subscription.items.data[0].price.id,
+        currentPeriodStart: subscription.current_period_start,
         currentPeriodEnd: subscription.current_period_end,
+        cancelAtPeriodEnd: subscription.cancel_at_period_end,
         updatedAt: Date.now(),
-      });
+      }, { merge: true });
+
+      console.log('Successfully updated subscription in Firestore');
     }
 
     return {
