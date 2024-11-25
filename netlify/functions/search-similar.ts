@@ -6,12 +6,8 @@ const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
-const pinecone = new Pinecone({
-  apiKey: process.env.PINECONE_API_KEY!,
-  environment: process.env.PINECONE_ENVIRONMENT!,
-});
-
-const index = pinecone.index(process.env.PINECONE_INDEX!);
+const pc = new Pinecone();
+const index = pc.index(process.env.PINECONE_INDEX!);
 const SIMILARITY_THRESHOLD = 0.85;
 
 export const handler: Handler = async (event) => {
