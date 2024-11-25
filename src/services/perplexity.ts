@@ -41,7 +41,7 @@ export async function queryPerplexity(question: string): Promise<PerplexityRespo
     const relevancyResponse = await checkQueryRelevancy(question);
     console.log('Relevancy check result:', relevancyResponse);
     
-    if (!relevancyResponse.isRelevant) {
+    if (!relevancyResponse.relevancy) {
       console.log('❌ Query deemed not relevant');
       throw new NotRelevantError();
     }
