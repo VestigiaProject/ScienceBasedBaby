@@ -25,7 +25,7 @@ export const handler: Handler = async (event) => {
     }
 
     const response = await openai.chat.completions.create({
-      model: "gpt-4-turbo-preview",
+      model: "gpt-4o-mini",
       messages: [
         {
           role: "system",
@@ -44,11 +44,32 @@ export const handler: Handler = async (event) => {
       presence_penalty: 0
     });
 
+    // Log OpenAI response details
+    console.log('OpenAI Response:', {
+      model: response.model,
+      content: response.choices[0].message.content,
+      usage: {
+        prompt_tokens: response.usage?.prompt_tokens,
+        completion_tokens: response.usage?.completion_tokens,
+        total_tokens: response.usage?.total_tokens
+      },
+      finish_reason: response.choices[0].finish_reason,
+      created: new Date(response.created * 1000).toISOString(),
+      response_ms: Date.now() - (response.created * 1000)
+    });
+
     const result = JSON.parse(response.choices[0].message.content) as RelevancyResponse;
 
     return {
       statusCode: 200,
-      body: JSON.stringify({ isRelevant: result.relevancy })
+      body: JSON.stringify({ 
+        isRelevant: result.relevancy,
+        debug: {
+          tokens: response.usage,
+          model: response.model,
+          finish_reason: response.choices[0].finish_reason
+        }
+      })
     };
   } catch (error) {
     console.error('OpenAI relevancy check error:', error);
