@@ -11,7 +11,7 @@ function parsePerplexityResponse(content: string, rawResponse: any): CachedAnswe
     citations: []
   };
 
-  // Parse content sections
+  // Parse pros and cons sections
   sections.forEach(section => {
     const lines = section.trim().split('\n').filter(Boolean);
     const header = lines[0].toLowerCase();
@@ -25,30 +25,15 @@ function parsePerplexityResponse(content: string, rawResponse: any): CachedAnswe
       result.cons = lines
         .filter(line => line.startsWith('-') || line.startsWith('•'))
         .map(line => line.replace(/^[-•]\s*/, '').trim());
-    } else if (header.includes('citations')) {
-      const citationLines = lines.filter(line => line.startsWith('['));
-      result.citations = citationLines.map((line, index) => {
-        const match = line.match(/\[(\d+)\]\s*-?\s*(.+?)(?:\s*\(|$)/);
-        if (!match) return null;
-
-        const [, idStr, text] = match;
-        const url = line.includes('http') ? line.match(/(https?:\/\/[^\s)]+)/)?.[0] : undefined;
-
-        return {
-          id: parseInt(idStr, 10),
-          text: text.trim(),
-          url: url || rawResponse?.citations?.[index] || undefined
-        };
-      }).filter((citation): citation is NonNullable<typeof citation> => citation !== null);
     }
   });
 
-  // If no citations were parsed from content but raw citations exist, use those
-  if (result.citations.length === 0 && rawResponse?.citations?.length > 0) {
+  // Use citations directly from the API response
+  if (rawResponse?.citations?.length > 0) {
     result.citations = rawResponse.citations.map((url: string, index: number) => ({
       id: index + 1,
-      text: url.split('/').slice(-1)[0].replace(/-/g, ' '),
-      url
+      text: url,
+      url: url
     }));
   }
 
