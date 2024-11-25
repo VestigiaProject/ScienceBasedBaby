@@ -1,38 +1,53 @@
-import { checkQueryRelevancy } from './openai';
 import { findSimilarAnswer, cacheAnswer } from './pinecone';
+import { checkQueryRelevancy } from './openai';
+import { NotRelevantError } from './errors';
+import { CachedAnswer } from '../types/answers';
 
-interface PerplexityResponse {
-  pros: string[];
-  cons: string[];
-  citations: Array<{
-    id: number;
-    text: string;
-    url?: string;
-  }>;
+function parsePerplexityResponse(content: string): CachedAnswer {
+  const sections = content.split('###').filter(Boolean);
+  const result: CachedAnswer = {
+    pros: [],
+    cons: [],
+    citations: []
+  };
+
+  sections.forEach(section => {
+    const lines = section.trim().split('\n').filter(Boolean);
+    const header = lines[0].toLowerCase();
+    lines.shift(); // Remove the header
+
+    if (header.includes('pros')) {
+      result.pros = lines
+        .filter(line => line.startsWith('-'))
+        .map(line => line.replace(/^-\s*/, '').trim());
+    } else if (header.includes('cons')) {
+      result.cons = lines
+        .filter(line => line.startsWith('-'))
+        .map(line => line.replace(/^-\s*/, '').trim());
+    } else if (header.includes('citations')) {
+      result.citations = lines
+        .filter(line => line.startsWith('['))
+        .map(line => {
+          const match = line.match(/\[(\d+)\]\s*-\s*(.+?)(?:\s*\(|$)/);
+          if (!match) return null;
+
+          const [, idStr, text] = match;
+          const url = line.includes('http') ? line.match(/(https?:\/\/[^\s)]+)/)?.[0] : undefined;
+
+          return {
+            id: parseInt(idStr, 10),
+            text: text.trim(),
+            url
+          };
+        })
+        .filter((citation): citation is NonNullable<typeof citation> => citation !== null);
+    }
+  });
+
+  return result;
 }
 
-interface PerplexityAPIResponse {
-  id: string;
-  choices: Array<{
-    index: number;
-    message: {
-      role: string;
-      content: string;
-    };
-    finish_reason: string;
-  }>;
-  model: string;
-  created: number;
-}
-
-export class NotRelevantError extends Error {
-  constructor() {
-    super('Please only ask questions related to pregnancy and childcare.');
-    this.name = 'NotRelevantError';
-  }
-}
-
-export async function queryPerplexity(question: string): Promise<PerplexityResponse> {
+export async function queryPerplexity(question: string): Promise<CachedAnswer> {
   try {
     console.log('🔍 Starting query process for:', question);
     
@@ -71,75 +86,21 @@ export async function queryPerplexity(question: string): Promise<PerplexityRespo
       throw new Error(`API request failed: ${response.status} ${errorData}`);
     }
 
-    const data: PerplexityAPIResponse = await response.json();
+    const data = await response.json();
     console.log('Raw API response:', data);
-    
-    const content = data.choices[0]?.message?.content;
-    if (!content) {
+
+    if (!data.choices?.[0]?.message?.content) {
       throw new Error('Invalid response format from API');
     }
 
-    // Parse the response content into structured format
-    const sections = content.split('\n\n');
-    const result: PerplexityResponse = {
-      pros: [],
-      cons: [],
-      citations: []
-    };
-
-    let currentSection: 'pros' | 'cons' | 'citations' | null = null;
-
-    sections.forEach(section => {
-      const lines = section.trim().split('\n');
-      const header = lines[0].toLowerCase();
-
-      if (header.includes('pros:')) {
-        currentSection = 'pros';
-        lines.shift();
-      } else if (header.includes('cons:')) {
-        currentSection = 'cons';
-        lines.shift();
-      } else if (header.includes('citations:')) {
-        currentSection = 'citations';
-        lines.shift();
-      }
-
-      if (currentSection === 'citations') {
-        const items = lines
-          .map(line => line.trim())
-          .filter(line => line.length > 0)
-          .map(line => {
-            // Extract citation number and text
-            const match = line.match(/^\[(\d+)\]\s*(.+)$/);
-            if (!match) return null;
-
-            const [, idStr, text] = match;
-            const id = parseInt(idStr, 10);
-
-            // Try to extract DOI or URL
-            const urlMatch = text.match(/(?:doi\.org\/|(?:https?:\/\/)?(?:dx\.doi\.org\/|doi:))(10\.\d{4,}\/[-._;()\/:A-Z0-9]+)/i) ||
-                           text.match(/(https?:\/\/[^\s]+)/i);
-            
-            return {
-              id,
-              text,
-              url: urlMatch ? (urlMatch[0].startsWith('http') ? urlMatch[0] : `https://doi.org/${urlMatch[1]}`) : undefined
-            };
-          })
-          .filter((item): item is NonNullable<typeof item> => item !== null);
-
-        result.citations.push(...items);
-      } else if (currentSection) {
-        const items = lines
-          .map(line => line.trim())
-          .filter(line => line.length > 0)
-          .map(line => line.replace(/^[•\-\s]+/, '')); // Remove bullet points and leading spaces
-
-        result[currentSection].push(...items);
-      }
-    });
-
+    const result = parsePerplexityResponse(data.choices[0].message.content);
     console.log('📝 Parsed result:', result);
+
+    // Validate parsed result
+    if (result.pros.length === 0 && result.cons.length === 0) {
+      console.warn('⚠️ Warning: Parsed result has no pros or cons');
+      throw new Error('Failed to parse response: no valid content found');
+    }
 
     // Cache the new answer
     console.log('💾 Caching new answer...');
@@ -147,7 +108,6 @@ export async function queryPerplexity(question: string): Promise<PerplexityRespo
     console.log('✅ Answer cached successfully');
 
     return result;
-    
   } catch (error) {
     console.error('❌ Error in queryPerplexity:', error);
     if (error instanceof NotRelevantError) {
