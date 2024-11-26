@@ -16,30 +16,90 @@ export function TermsPrivacy() {
         <div className="bg-white shadow rounded-lg p-8">
           <h1 className="text-2xl font-bold text-gray-900 mb-6">Terms of Service & Privacy Policy</h1>
           
-          <section className="mb-8">
-            <h2 className="text-xl font-semibold text-gray-800 mb-4">Terms of Service</h2>
-            <div className="prose text-gray-600">
-              <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris.</p>
-              <p>Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident.</p>
-              <ul className="list-disc pl-5 mt-4">
-                <li>Service usage terms</li>
-                <li>User responsibilities</li>
-                <li>Subscription terms</li>
-                <li>Cancellation policy</li>
+          <section className="mb-12">
+            <h2 className="text-xl font-semibold text-gray-800 mb-4">Privacy Policy</h2>
+            <div className="prose text-gray-600 max-w-none">
+              <p className="text-sm text-gray-500 mb-4">Last updated: 28/11/2024</p>
+              
+              <h3 className="text-lg font-medium text-gray-800 mt-6 mb-2">1. Introduction</h3>
+              <p>Science Based Baby ("we," "our," "us") respects your privacy and is committed to protecting your personal information. This Privacy Policy explains how we collect, use, and protect your data when you use our web app.</p>
+              
+              <h3 className="text-lg font-medium text-gray-800 mt-6 mb-2">2. Information We Collect</h3>
+              <ul className="list-disc pl-5 space-y-1">
+                <li>Account Information: Name, email address, and any other details you provide during sign-up.</li>
+                <li>Usage Data: Information about how you interact with our app (e.g., pages visited, features used).</li>
+                <li>Device Data: Device type, browser, operating system, and IP address.</li>
               </ul>
+              
+              <h3 className="text-lg font-medium text-gray-800 mt-6 mb-2">3. How We Use Your Information</h3>
+              <ul className="list-disc pl-5 space-y-1">
+                <li>To provide and improve the web app.</li>
+                <li>To personalize your experience.</li>
+                <li>To analyze usage and performance.</li>
+                <li>To communicate with you about updates or relevant information.</li>
+              </ul>
+              
+              <h3 className="text-lg font-medium text-gray-800 mt-6 mb-2">4. Sharing Your Information</h3>
+              <p>We do not sell or share your personal information with third parties, except:</p>
+              <ul className="list-disc pl-5 space-y-1">
+                <li>When required by law.</li>
+                <li>With service providers who help us operate the app (e.g., analytics or hosting services).</li>
+              </ul>
+              
+              <h3 className="text-lg font-medium text-gray-800 mt-6 mb-2">5. Cookies</h3>
+              <p>We use cookies to enhance your experience. You can disable cookies in your browser settings, but some features of the app may not work as intended.</p>
+              
+              <h3 className="text-lg font-medium text-gray-800 mt-6 mb-2">6. Data Security</h3>
+              <p>We use industry-standard security measures to protect your data, but no system is 100% secure. Use the app at your own risk.</p>
+              
+              <h3 className="text-lg font-medium text-gray-800 mt-6 mb-2">7. Your Rights</h3>
+              <p>Depending on your location, you may have rights to access, update, or delete your data. Contact us at contact@sciencebasedbaby.com for requests.</p>
+              
+              <h3 className="text-lg font-medium text-gray-800 mt-6 mb-2">8. Changes to This Policy</h3>
+              <p>We may update this Privacy Policy from time to time. Continued use of the app after changes are made indicates your acceptance of the updated policy.</p>
+              
+              <h3 className="text-lg font-medium text-gray-800 mt-6 mb-2">9. Contact Us</h3>
+              <p>For questions about this Privacy Policy, email us at contact@sciencebasedbaby.com.</p>
             </div>
           </section>
 
           <section>
-            <h2 className="text-xl font-semibold text-gray-800 mb-4">Privacy Policy</h2>
-            <div className="prose text-gray-600">
-              <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.</p>
-              <h3 className="text-lg font-medium text-gray-800 mt-4 mb-2">Data Collection</h3>
-              <p>Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.</p>
-              <h3 className="text-lg font-medium text-gray-800 mt-4 mb-2">Data Usage</h3>
-              <p>Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur.</p>
-              <h3 className="text-lg font-medium text-gray-800 mt-4 mb-2">Your Rights</h3>
-              <p>Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
+            <h2 className="text-xl font-semibold text-gray-800 mb-4">Terms of Service</h2>
+            <div className="prose text-gray-600 max-w-none">
+              <p className="text-sm text-gray-500 mb-4">Last updated: 28/11/2024</p>
+              
+              <h3 className="text-lg font-medium text-gray-800 mt-6 mb-2">1. Acceptance of Terms</h3>
+              <p>By using Science Based Baby, you agree to these Terms of Service. If you do not agree, do not use the app.</p>
+              
+              <h3 className="text-lg font-medium text-gray-800 mt-6 mb-2">2. Eligibility</h3>
+              <p>You must be 18 years or older to use this app. By using it, you confirm that you meet this requirement.</p>
+              
+              <h3 className="text-lg font-medium text-gray-800 mt-6 mb-2">3. Use of the App</h3>
+              <ul className="list-disc pl-5 space-y-1">
+                <li>You may use the app only for personal, non-commercial purposes.</li>
+                <li>Do not misuse the app (e.g., attempting to hack, scrape, or distribute harmful content).</li>
+              </ul>
+              
+              <h3 className="text-lg font-medium text-gray-800 mt-6 mb-2">4. Intellectual Property</h3>
+              <p>All content, design, and features of the app, other than referenced articles, are owned by Science Based Baby. You may not copy, reproduce, or distribute any part of the app without our permission.</p>
+              
+              <h3 className="text-lg font-medium text-gray-800 mt-6 mb-2">5. Disclaimer</h3>
+              <ul className="list-disc pl-5 space-y-1">
+                <li>The app provides informational summaries based on research. It is not medical advice. Always consult a healthcare professional for personal guidance.</li>
+                <li>We make no guarantees about the accuracy or completeness of the information provided.</li>
+              </ul>
+              
+              <h3 className="text-lg font-medium text-gray-800 mt-6 mb-2">6. Limitation of Liability</h3>
+              <p>We are not liable for any direct, indirect, or incidental damages resulting from your use of the app.</p>
+              
+              <h3 className="text-lg font-medium text-gray-800 mt-6 mb-2">7. Account Termination</h3>
+              <p>We reserve the right to suspend or terminate your account if you violate these Terms of Service.</p>
+              
+              <h3 className="text-lg font-medium text-gray-800 mt-6 mb-2">8. Changes to Terms</h3>
+              <p>We may update these Terms of Service. Continued use of the app after changes are made indicates your acceptance of the updated terms.</p>
+              
+              <h3 className="text-lg font-medium text-gray-800 mt-6 mb-2">9. Contact Us</h3>
+              <p>For questions about these Terms of Service, email us at contact@sciencebasedbaby.com.</p>
             </div>
           </section>
         </div>

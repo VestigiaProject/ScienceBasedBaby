@@ -48,7 +48,7 @@ export function ResultsDisplay({ pros, cons, citations }: ResultsDisplayProps) {
         <div className="bg-white rounded-lg shadow-md p-6">
           <h2 className="text-lg font-semibold text-green-600 flex items-center gap-2 mb-4">
             <CheckCircle className="w-5 h-5" />
-            Scientific Evidence Supporting
+            Scientific Pros
           </h2>
           <ul className="space-y-3">
             {pros.map((pro, index) => (
@@ -63,7 +63,7 @@ export function ResultsDisplay({ pros, cons, citations }: ResultsDisplayProps) {
         <div className="bg-white rounded-lg shadow-md p-6">
           <h2 className="text-lg font-semibold text-red-600 flex items-center gap-2 mb-4">
             <XCircle className="w-5 h-5" />
-            Scientific Concerns
+            Scientific Cons
           </h2>
           <ul className="space-y-3">
             {cons.map((con, index) => (
