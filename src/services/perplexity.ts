@@ -2,11 +2,9 @@ import { findSimilarAnswer, cacheAnswer } from './pinecone';
 import { checkQueryRelevancy } from './openai';
 import { NotRelevantError } from './errors';
 import { CachedAnswer } from '../types/answers';
-import { getFirestore } from 'firebase/firestore';
-import { doc, getDoc, updateDoc, setDoc } from 'firebase/firestore';
-import { auth } from '../config/firebase';
+import { doc, getDoc, updateDoc } from 'firebase/firestore';
+import { auth, db } from '../config/firebase';
 
-const db = getFirestore();
 const DAILY_REQUEST_LIMIT = 35;
 
 async function checkAndUpdateRequestLimit(): Promise<boolean> {
@@ -27,11 +25,18 @@ async function checkAndUpdateRequestLimit(): Promise<boolean> {
     date: today
   };
 
+  // Check if we're under the limit or it's a new day
   if (data.requestTracking?.date !== today || data.requestTracking?.count < DAILY_REQUEST_LIMIT) {
-    await updateDoc(subscriptionDoc, {
-      requestTracking: requestData
-    });
-    return true;
+    try {
+      await updateDoc(subscriptionDoc, {
+        requestTracking: requestData
+      });
+      return true;
+    } catch (error) {
+      console.error('Failed to update request tracking:', error);
+      // If we fail to update tracking, still allow the request
+      return true;
+    }
   }
 
   return false;
