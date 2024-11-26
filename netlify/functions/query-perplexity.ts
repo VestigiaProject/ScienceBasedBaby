@@ -6,7 +6,7 @@ export const handler: Handler = async (event) => {
   }
 
   try {
-    const { question, stream = false } = JSON.parse(event.body || '');
+    const { question } = JSON.parse(event.body || '');
 
     if (!question) {
       return {
@@ -24,7 +24,6 @@ export const handler: Handler = async (event) => {
       },
       body: JSON.stringify({
         model: 'llama-3.1-sonar-large-128k-online',
-        stream,
         messages: [
           { 
             role: 'system', 
@@ -51,23 +50,11 @@ CITATIONS:
     });
 
     if (!response.ok) {
-      throw new Error(`API request failed: ${response.status}`);
+      const errorData = await response.text();
+      console.error('Perplexity API Error:', errorData);
+      throw new Error(`API request failed: ${response.status} ${errorData}`);
     }
 
-    // If streaming is enabled, pipe the response directly
-    if (stream) {
-      return {
-        statusCode: 200,
-        headers: {
-          'Content-Type': 'text/event-stream',
-          'Cache-Control': 'no-cache',
-          'Connection': 'keep-alive'
-        },
-        body: response.body
-      };
-    }
-
-    // For non-streaming responses, return as normal
     const data = await response.json();
     return {
       statusCode: 200,
