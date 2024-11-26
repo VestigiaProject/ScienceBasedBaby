@@ -90,18 +90,6 @@ export function SubscriptionProvider({ children }: { children: React.ReactNode }
     };
   }, [user, checkSubscription]);
 
-  useEffect(() => {
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === 'visible') {
-        console.log('Tab became visible, refreshing subscription');
-        checkSubscription();
-      }
-    };
-
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
-  }, [checkSubscription]);
-
   return (
     <SubscriptionContext.Provider value={{ 
       hasActiveSubscription, 
