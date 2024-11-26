@@ -228,9 +228,12 @@ export async function queryPerplexity(question: string): Promise<CachedAnswer> {
     const result = parsePerplexityResponse(data.choices[0].message.content, data);
     console.log('📝 Parsed result:', result);
 
-    console.log('💾 Caching new answer...');
-    await cacheAnswer(question, result); // Use original question for caching
-    console.log('✅ Answer cached successfully');
+    // Cache the answer asynchronously after returning the result
+    setTimeout(() => {
+      cacheAnswer(question, result)
+        .then(() => console.log('✅ Answer cached successfully'))
+        .catch(error => console.error('❌ Error caching answer:', error));
+    }, 0);
 
     return result;
   } catch (error) {
