@@ -67,6 +67,29 @@ async function checkAndUpdateRequestLimit(): Promise<boolean> {
   return false;
 }
 
+function extractUrlFromCitation(citation: string): string | undefined {
+  // Match DOI
+  const doiMatch = citation.match(/(?:doi:|DOI:?\s*)?(?:https?:\/\/doi\.org\/|10\.\d{4,}\/[-._;()\/:A-Z0-9]+)/i);
+  if (doiMatch) {
+    const doi = doiMatch[0].replace(/^doi:/i, '').trim();
+    return doi.startsWith('http') ? doi : `https://doi.org/${doi}`;
+  }
+
+  // Match PubMed URL
+  const pubmedMatch = citation.match(/https?:\/\/(?:www\.)?ncbi\.nlm\.nih\.gov\/pubmed\/\d+/i);
+  if (pubmedMatch) {
+    return pubmedMatch[0];
+  }
+
+  // Match any URL
+  const urlMatch = citation.match(/https?:\/\/[^\s<>[\]()]+[^\s.,<>[\]()]/i);
+  if (urlMatch) {
+    return urlMatch[0];
+  }
+
+  return undefined;
+}
+
 function parsePerplexityResponse(content: string, rawResponse: any): CachedAnswer {
   console.log('🔍 Parsing Perplexity response:', content);
   
@@ -115,12 +138,12 @@ function parsePerplexityResponse(content: string, rawResponse: any): CachedAnswe
         .map(line => line.trim())
         .filter(line => line.startsWith('['));
 
-      result.citations = citationLines.map((line, index) => {
-        const urlMatch = line.match(/https?:\/\/[^\s)]+/);
+      result.citations = citationLines.map((citation, index) => {
+        const url = extractUrlFromCitation(citation);
         return {
           id: index + 1,
-          text: line,
-          url: urlMatch ? urlMatch[0] : undefined
+          text: citation.replace(/^\[\d+\]\s*/, '').trim(),
+          url
         };
       });
       console.log(`✅ Found ${result.citations.length} citations`);
