@@ -25,6 +25,7 @@ async function checkAndUpdateRequestLimit(): Promise<boolean> {
     date: today
   };
 
+  // Check if we're under the limit or it's a new day
   if (data.requestTracking?.date !== today || data.requestTracking?.count < DAILY_REQUEST_LIMIT) {
     try {
       await updateDoc(subscriptionDoc, {
@@ -33,6 +34,7 @@ async function checkAndUpdateRequestLimit(): Promise<boolean> {
       return true;
     } catch (error) {
       console.error('Failed to update request tracking:', error);
+      // If we fail to update tracking, still allow the request
       return true;
     }
   }
@@ -40,7 +42,7 @@ async function checkAndUpdateRequestLimit(): Promise<boolean> {
   return false;
 }
 
-function parsePerplexityResponse(content: string): CachedAnswer {
+function parsePerplexityResponse(content: string, rawResponse: any): CachedAnswer {
   const sections = content.split('###').filter(Boolean);
   const result: CachedAnswer = {
     pros: [],
@@ -61,40 +63,42 @@ function parsePerplexityResponse(content: string): CachedAnswer {
       result.cons = lines
         .filter(line => line.startsWith('-') || line.startsWith('•'))
         .map(line => line.replace(/^[-•]\s*/, '').trim());
-    } else if (header.includes('citations')) {
-      result.citations = lines
-        .filter(line => line.startsWith('['))
-        .map((line, index) => {
-          const urlMatch = line.match(/https?:\/\/[^\s]+/);
-          return {
-            id: index + 1,
-            text: line.trim(),
-            url: urlMatch ? urlMatch[0] : undefined
-          };
-        });
     }
   });
+
+  if (rawResponse?.citations?.length > 0) {
+    result.citations = rawResponse.citations.map((url: string, index: number) => ({
+      id: index + 1,
+      text: url,
+      url: url
+    }));
+  }
 
   return result;
 }
 
-export async function queryPerplexity(
-  question: string,
-  onPartialResponse?: (partial: Partial<CachedAnswer>) => void
-): Promise<CachedAnswer> {
+export async function queryPerplexity(question: string): Promise<CachedAnswer> {
   try {
     console.log('🔍 Starting query process for:', question);
     
-    const { isRelevant } = await checkQueryRelevancy(question);
+    console.log('Checking query relevancy...');
+    const { isRelevant, debug } = await checkQueryRelevancy(question);
+    console.log('Relevancy check result:', { isRelevant, debug });
+    
     if (!isRelevant) {
+      console.log('❌ Query deemed not relevant');
       throw new NotRelevantError();
     }
 
+    console.log('🔍 Searching for cached similar answers...');
     const cachedAnswer = await findSimilarAnswer(question);
     if (cachedAnswer) {
+      console.log('✅ Found cached answer:', cachedAnswer);
       return cachedAnswer;
     }
+    console.log('❌ No cached answer found, proceeding with Perplexity API');
 
+    // Check request limit before making Perplexity API call
     const canMakeRequest = await checkAndUpdateRequestLimit();
     if (!canMakeRequest) {
       throw new Error('Daily request limit reached. Please try again tomorrow.');
@@ -105,49 +109,36 @@ export async function queryPerplexity(
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ question, stream: true })
+      body: JSON.stringify({ question })
     });
 
+    console.log('API Response status:', response.status);
+    
     if (!response.ok) {
-      throw new Error(`API request failed: ${response.status}`);
+      const errorData = await response.text();
+      console.error('API Error response:', errorData);
+      throw new Error(`API request failed: ${response.status} ${errorData}`);
     }
 
-    if (!response.body) {
-      throw new Error('No response body received');
+    const data = await response.json();
+    console.log('Raw API response:', data);
+
+    if (!data.choices?.[0]?.message?.content) {
+      throw new Error('Invalid response format from API');
     }
 
-    const reader = response.body.getReader();
-    const decoder = new TextDecoder();
-    let fullContent = '';
-
-    while (true) {
-      const { value, done } = await reader.read();
-      if (done) break;
-      
-      const chunk = decoder.decode(value);
-      const lines = chunk.split('\n').filter(line => line.trim());
-      
-      for (const line of lines) {
-        if (line.startsWith('data: ')) {
-          const data = JSON.parse(line.slice(6));
-          if (data.choices?.[0]?.delta?.content) {
-            fullContent += data.choices[0].delta.content;
-            if (onPartialResponse) {
-              const partialResult = parsePerplexityResponse(fullContent);
-              onPartialResponse(partialResult);
-            }
-          }
-        }
-      }
-    }
-
-    const result = parsePerplexityResponse(fullContent);
+    const result = parsePerplexityResponse(data.choices[0].message.content, data);
+    console.log('📝 Parsed result:', result);
 
     if (result.pros.length === 0 && result.cons.length === 0) {
+      console.warn('⚠️ Warning: Parsed result has no pros or cons');
       throw new Error('Failed to parse response: no valid content found');
     }
 
+    console.log('💾 Caching new answer...');
     await cacheAnswer(question, result);
+    console.log('✅ Answer cached successfully');
+
     return result;
   } catch (error) {
     console.error('❌ Error in queryPerplexity:', error);
