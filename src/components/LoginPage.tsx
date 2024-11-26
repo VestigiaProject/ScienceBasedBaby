@@ -1,6 +1,7 @@
 import React from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { Baby } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 export function LoginPage() {
   const { signInWithGoogle } = useAuth();
@@ -41,7 +42,10 @@ export function LoginPage() {
         </div>
 
         <p className="mt-4 text-center text-sm text-gray-600">
-          By signing in, you agree to our Terms of Service and Privacy Policy
+          By signing in, you agree to our{' '}
+          <Link to="/terms-privacy" className="text-blue-600 hover:text-blue-800">
+            Terms of Service and Privacy Policy
+          </Link>
         </p>
       </div>
     </div>

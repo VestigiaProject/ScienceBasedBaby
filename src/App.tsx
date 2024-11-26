@@ -4,6 +4,7 @@ import { LoginPage } from './components/LoginPage';
 import { PricingPage } from './components/PricingPage';
 import { PrivateRoute } from './components/PrivateRoute';
 import { MainApp } from './components/MainApp';
+import { TermsPrivacy } from './components/TermsPrivacy';
 import { useAuth } from './contexts/AuthContext';
 import { useSubscription } from './contexts/SubscriptionContext';
 
@@ -53,6 +54,7 @@ export default function App() {
           </PrivateRoute>
         }
       />
+      <Route path="/terms-privacy" element={<TermsPrivacy />} />
       <Route
         path="/"
         element={

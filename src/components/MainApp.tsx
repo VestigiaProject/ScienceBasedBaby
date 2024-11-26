@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Baby, LogOut, AlertCircle } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { SearchBox } from './SearchBox';
 import { ResultsDisplay } from './ResultsDisplay';
 import { ErrorDisplay } from './ErrorDisplay';
@@ -41,14 +42,8 @@ export function MainApp() {
     setIsLoading(true);
     setError(null);
     try {
-      const enhancedQuery = `The user has asked something about: "${query}" Give the pros and cons after having searched answers in scientific and peer-reviewed publications exclusively, not low-quality media. 
-- CRITICAL: Format your response EXACTLY as follows, using these EXACT markers: <PROS>, </PROS>, <CONS>, </CONS>, <CITATIONS>, </CITATIONS>
-- Start each pro or con point with • (bullet point)
-- Citations must be numbered sequentially [1], [2], etc. WITHOUT bullet points
-- Include citation numbers [n] at the end of each point
-- Ensure all citations are from scientific sources. inurl:pubmed.ncbi.nlm.nih.gov`;
       console.log('Starting search with query:', query);
-      const response = await queryPerplexity(enhancedQuery);
+      const response = await queryPerplexity(query);
       console.log('Setting results:', response);
       setResults(response);
     } catch (error) {
@@ -165,6 +160,12 @@ export function MainApp() {
               Always check your sources and consult a medical professional if necessary.
             </p>
           </div>
+        </div>
+
+        <div className="mt-12 text-center text-xs text-gray-400">
+          <Link to="/terms-privacy" className="hover:text-gray-600">
+            Terms of Service & Privacy Policy
+          </Link>
         </div>
 
         {showCancelConfirm && (
