@@ -41,7 +41,11 @@ export function MainApp() {
     setIsLoading(true);
     setError(null);
     try {
-      const enhancedQuery = `The user has asked something about: "${query}" Give the pros and cons after having searched answers in scientific and peer-reviewed publications exclusively, not low-quality media. inurl:pubmed.ncbi.nlm.nih.gov`;
+      const enhancedQuery = `The user has asked something about: "${query}" Give the pros and cons after having searched answers in scientific and peer-reviewed publications exclusively, not low-quality media. 
+- CRITICAL: Format your response EXACTLY as follows, using these EXACT markers: <PROS>, </PROS>, <CONS>, </CONS>, <CITATIONS>, </CITATIONS>
+- Start each point with • (bullet point)
+- Include citation numbers [n] at the end of each point
+- Ensure all citations are from scientific sources. inurl:pubmed.ncbi.nlm.nih.gov`;
       console.log('Starting search with query:', query);
       const response = await queryPerplexity(enhancedQuery);
       console.log('Setting results:', response);
