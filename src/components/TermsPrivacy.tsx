@@ -100,6 +100,13 @@ export function TermsPrivacy() {
               
               <h3 className="text-lg font-medium text-gray-800 mt-6 mb-2">9. Contact Us</h3>
               <p>For questions about these Terms of Service, email us at contact@sciencebasedbaby.com.</p>
+
+              <h3 className="text-lg font-medium text-gray-800 mt-6 mb-2">11. Subscriptions and Cancellations</h3>
+              <ul className="list-disc pl-5 space-y-1">
+                <li>Subscriptions are billed on a recurring basis (e.g., monthly or annually), as specified at the time of purchase.</li>
+                <li>You may cancel your subscription at any time through your account settings. Your access will continue until the end of the current billing cycle.</li>
+                <li>No refunds will be provided for any unused portion of the subscription period.</li>
+              </ul>
             </div>
           </section>
         </div>
