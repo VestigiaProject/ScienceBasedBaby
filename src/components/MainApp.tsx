@@ -123,6 +123,13 @@ export function MainApp() {
         </div>
 
         <div className="flex flex-col items-center gap-8">
+          <div className="text-center max-w-2xl">
+            <p className="text-lg text-gray-600">
+              Get advice on pregnancy and parenting questions based on scientific studies. 
+              We show you the pros and cons, you make your opinion.
+            </p>
+          </div>
+
           <SearchBox onSearch={handleSearch} isLoading={isLoading} />
           
           {error && (
@@ -146,6 +153,13 @@ export function MainApp() {
               />
             )
           )}
+
+          <div className="mt-8 text-center text-sm text-gray-500 max-w-2xl">
+            <p>
+              We strive to provide accurate and science-based results, but AI can be subject to mistakes or imprecisions. 
+              Always check your sources and consult a medical professional if necessary.
+            </p>
+          </div>
         </div>
 
         {showCancelConfirm && (
