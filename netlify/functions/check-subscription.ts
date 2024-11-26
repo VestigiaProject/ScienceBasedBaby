@@ -13,7 +13,6 @@ const db = getFirestore();
 
 export const handler: Handler = async (event) => {
   try {
-    // Verify authentication
     const authHeader = event.headers.authorization;
     if (!authHeader?.startsWith('Bearer ')) {
       console.log('Missing or invalid authorization header');
@@ -29,7 +28,6 @@ export const handler: Handler = async (event) => {
 
     console.log('Checking subscription for user:', userId);
 
-    // Get subscription data
     const subDoc = await db.collection('subscriptions').doc(userId).get();
     const subscription = subDoc.data();
 
@@ -49,12 +47,12 @@ export const handler: Handler = async (event) => {
           subscriptionStatus: null,
           currentPeriodEnd: null,
           cancelAtPeriodEnd: false,
+          requestTracking: null,
           timestamp: Date.now()
         })
       };
     }
 
-    // Check if subscription is active and not expired
     const currentTime = Date.now() / 1000;
     const hasActiveSubscription = 
       subscription.status === 'active' && 
@@ -65,7 +63,8 @@ export const handler: Handler = async (event) => {
       currentPeriodEnd: subscription.currentPeriodEnd,
       cancelAtPeriodEnd: subscription.cancelAtPeriodEnd,
       currentTime,
-      hasActiveSubscription
+      hasActiveSubscription,
+      requestTracking: subscription.requestTracking
     });
 
     return {
@@ -80,6 +79,7 @@ export const handler: Handler = async (event) => {
         subscriptionStatus: subscription.status,
         currentPeriodEnd: subscription.currentPeriodEnd,
         cancelAtPeriodEnd: subscription.cancelAtPeriodEnd || false,
+        requestTracking: subscription.requestTracking || null,
         timestamp: Date.now()
       })
     };

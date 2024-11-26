@@ -2,6 +2,40 @@ import { findSimilarAnswer, cacheAnswer } from './pinecone';
 import { checkQueryRelevancy } from './openai';
 import { NotRelevantError } from './errors';
 import { CachedAnswer } from '../types/answers';
+import { getFirestore } from 'firebase/firestore';
+import { doc, getDoc, updateDoc, setDoc } from 'firebase/firestore';
+import { auth } from '../config/firebase';
+
+const db = getFirestore();
+const DAILY_REQUEST_LIMIT = 35;
+
+async function checkAndUpdateRequestLimit(): Promise<boolean> {
+  const user = auth.currentUser;
+  if (!user) throw new Error('User not authenticated');
+
+  const subscriptionDoc = doc(db, 'subscriptions', user.uid);
+  const subscription = await getDoc(subscriptionDoc);
+  const data = subscription.data();
+
+  if (!data) throw new Error('No subscription data found');
+
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+  
+  const requestData = {
+    requestCount: ((data.requestTracking?.date === today) ? data.requestTracking.count : 0) + 1,
+    date: today
+  };
+
+  if (data.requestTracking?.date !== today || data.requestTracking?.count < DAILY_REQUEST_LIMIT) {
+    await updateDoc(subscriptionDoc, {
+      requestTracking: requestData
+    });
+    return true;
+  }
+
+  return false;
+}
 
 function parsePerplexityResponse(content: string, rawResponse: any): CachedAnswer {
   const sections = content.split('###').filter(Boolean);
@@ -11,11 +45,10 @@ function parsePerplexityResponse(content: string, rawResponse: any): CachedAnswe
     citations: []
   };
 
-  // Parse pros and cons sections
   sections.forEach(section => {
     const lines = section.trim().split('\n').filter(Boolean);
     const header = lines[0].toLowerCase();
-    lines.shift(); // Remove the header
+    lines.shift();
 
     if (header.includes('pros')) {
       result.pros = lines
@@ -28,7 +61,6 @@ function parsePerplexityResponse(content: string, rawResponse: any): CachedAnswe
     }
   });
 
-  // Use citations directly from the API response
   if (rawResponse?.citations?.length > 0) {
     result.citations = rawResponse.citations.map((url: string, index: number) => ({
       id: index + 1,
@@ -44,7 +76,6 @@ export async function queryPerplexity(question: string): Promise<CachedAnswer> {
   try {
     console.log('🔍 Starting query process for:', question);
     
-    // First, check if the query is relevant
     console.log('Checking query relevancy...');
     const { isRelevant, debug } = await checkQueryRelevancy(question);
     console.log('Relevancy check result:', { isRelevant, debug });
@@ -54,7 +85,6 @@ export async function queryPerplexity(question: string): Promise<CachedAnswer> {
       throw new NotRelevantError();
     }
 
-    // Check for cached similar answer
     console.log('🔍 Searching for cached similar answers...');
     const cachedAnswer = await findSimilarAnswer(question);
     if (cachedAnswer) {
@@ -62,6 +92,12 @@ export async function queryPerplexity(question: string): Promise<CachedAnswer> {
       return cachedAnswer;
     }
     console.log('❌ No cached answer found, proceeding with Perplexity API');
+
+    // Check request limit before making Perplexity API call
+    const canMakeRequest = await checkAndUpdateRequestLimit();
+    if (!canMakeRequest) {
+      throw new Error('Daily request limit reached. Please try again tomorrow.');
+    }
 
     const response = await fetch('/.netlify/functions/query-perplexity', {
       method: 'POST',
@@ -89,13 +125,11 @@ export async function queryPerplexity(question: string): Promise<CachedAnswer> {
     const result = parsePerplexityResponse(data.choices[0].message.content, data);
     console.log('📝 Parsed result:', result);
 
-    // Validate parsed result
     if (result.pros.length === 0 && result.cons.length === 0) {
       console.warn('⚠️ Warning: Parsed result has no pros or cons');
       throw new Error('Failed to parse response: no valid content found');
     }
 
-    // Cache the new answer
     console.log('💾 Caching new answer...');
     await cacheAnswer(question, result);
     console.log('✅ Answer cached successfully');
