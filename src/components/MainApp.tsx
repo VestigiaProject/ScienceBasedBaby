@@ -29,6 +29,7 @@ export function MainApp() {
     citations: []
   });
 
+  // Convert string 'false'/'true' to boolean
   const isCancelled = debugInfo?.subscriptionStatus === 'canceled' || 
     (typeof debugInfo?.cancelAtPeriodEnd === 'string' ? 
       debugInfo.cancelAtPeriodEnd === 'true' : 
