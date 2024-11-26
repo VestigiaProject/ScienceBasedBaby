@@ -33,11 +33,9 @@ async function checkAndUpdateRequestLimit(): Promise<boolean> {
   const now = new Date();
   const today = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
   
-  // Get current tracking or initialize new
   const currentTracking = data.requestTracking || { requestCount: 0, date: 0 };
   console.log('📊 Current tracking:', currentTracking);
 
-  // If it's a new day or no previous tracking
   if (currentTracking.date !== today) {
     console.log('📅 New day detected, resetting count');
     await setDoc(subscriptionDoc, {
@@ -51,7 +49,6 @@ async function checkAndUpdateRequestLimit(): Promise<boolean> {
     return true;
   }
 
-  // Check if under limit
   if (!currentTracking.requestCount || currentTracking.requestCount < DAILY_REQUEST_LIMIT) {
     const newCount = (currentTracking.requestCount || 0) + 1;
     console.log(`📈 Incrementing count from ${currentTracking.requestCount} to ${newCount}`);
@@ -71,36 +68,79 @@ async function checkAndUpdateRequestLimit(): Promise<boolean> {
 }
 
 function parsePerplexityResponse(content: string, rawResponse: any): CachedAnswer {
-  const sections = content.split('###').filter(Boolean);
+  console.log('🔍 Parsing Perplexity response:', content);
+  
   const result: CachedAnswer = {
     pros: [],
     cons: [],
     citations: []
   };
 
-  sections.forEach(section => {
-    const lines = section.trim().split('\n').filter(Boolean);
-    const header = lines[0].toLowerCase();
-    lines.shift();
+  try {
+    // Extract content between markers using regex
+    const prosMatch = content.match(/<PROS>([\s\S]*?)<\/PROS>/);
+    const consMatch = content.match(/<CONS>([\s\S]*?)<\/CONS>/);
+    const citationsMatch = content.match(/<CITATIONS>([\s\S]*?)<\/CITATIONS>/);
 
-    if (header.includes('pros')) {
-      result.pros = lines
-        .filter(line => line.startsWith('-') || line.startsWith('•'))
-        .map(line => line.replace(/^[-•]\s*/, '').trim());
-    } else if (header.includes('cons')) {
-      result.cons = lines
-        .filter(line => line.startsWith('-') || line.startsWith('•'))
-        .map(line => line.replace(/^[-•]\s*/, '').trim());
+    console.log('📝 Found sections:', {
+      hasPros: !!prosMatch,
+      hasCons: !!consMatch,
+      hasCitations: !!citationsMatch
+    });
+
+    // Process pros
+    if (prosMatch) {
+      result.pros = prosMatch[1]
+        .split('\n')
+        .map(line => line.trim())
+        .filter(line => line.startsWith('•'))
+        .map(line => line.substring(1).trim());
+      console.log(`✅ Found ${result.pros.length} pros`);
     }
-  });
 
-  if (rawResponse?.citations?.length > 0) {
-    result.citations = rawResponse.citations.map((url: string, index: number) => ({
-      id: index + 1,
-      text: url,
-      url: url
-    }));
+    // Process cons
+    if (consMatch) {
+      result.cons = consMatch[1]
+        .split('\n')
+        .map(line => line.trim())
+        .filter(line => line.startsWith('•'))
+        .map(line => line.substring(1).trim());
+      console.log(`✅ Found ${result.cons.length} cons`);
+    }
+
+    // Process citations
+    if (citationsMatch) {
+      const citationLines = citationsMatch[1]
+        .split('\n')
+        .map(line => line.trim())
+        .filter(line => line.startsWith('['));
+
+      result.citations = citationLines.map((line, index) => {
+        const urlMatch = line.match(/https?:\/\/[^\s)]+/);
+        return {
+          id: index + 1,
+          text: line,
+          url: urlMatch ? urlMatch[0] : undefined
+        };
+      });
+      console.log(`✅ Found ${result.citations.length} citations`);
+    }
+  } catch (error) {
+    console.error('❌ Error parsing response:', error);
+    throw new Error('Failed to parse response format');
   }
+
+  // Validation
+  if (result.pros.length === 0 && result.cons.length === 0) {
+    console.error('❌ No pros or cons found in parsed result');
+    throw new Error('Invalid response format: no pros or cons found');
+  }
+
+  console.log('📊 Final parsed result:', {
+    prosCount: result.pros.length,
+    consCount: result.cons.length,
+    citationsCount: result.citations.length
+  });
 
   return result;
 }
