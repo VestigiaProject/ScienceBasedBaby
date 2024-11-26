@@ -2,48 +2,71 @@ import { findSimilarAnswer, cacheAnswer } from './pinecone';
 import { checkQueryRelevancy } from './openai';
 import { NotRelevantError } from './errors';
 import { CachedAnswer } from '../types/answers';
-import { doc, getDoc, updateDoc } from 'firebase/firestore';
+import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { auth, db } from '../config/firebase';
 
 const DAILY_REQUEST_LIMIT = 35;
 
 async function checkAndUpdateRequestLimit(): Promise<boolean> {
   const user = auth.currentUser;
-  if (!user) throw new Error('User not authenticated');
+  if (!user) {
+    console.log('❌ No authenticated user found');
+    throw new Error('User not authenticated');
+  }
 
+  console.log('🔍 Checking request limit for user:', user.uid);
+  
   const subscriptionDoc = doc(db, 'subscriptions', user.uid);
   const subscription = await getDoc(subscriptionDoc);
   const data = subscription.data();
 
-  if (!data) throw new Error('No subscription data found');
+  if (!data) {
+    console.log('❌ No subscription data found for user:', user.uid);
+    throw new Error('No subscription data found');
+  }
+
+  console.log('📊 Current subscription data:', {
+    tracking: data.requestTracking,
+    timestamp: new Date().toISOString()
+  });
 
   const now = new Date();
   const today = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
   
-  // If it's a new day or no tracking exists, start fresh
-  if (!data.requestTracking?.date || data.requestTracking.date !== today) {
-    const requestData = {
-      count: 1,
-      date: today
-    };
-    await updateDoc(subscriptionDoc, {
-      requestTracking: requestData
-    });
+  // Get current tracking or initialize new
+  const currentTracking = data.requestTracking || { count: 0, date: 0 };
+  console.log('📊 Current tracking:', currentTracking);
+
+  // If it's a new day or no previous tracking
+  if (currentTracking.date !== today) {
+    console.log('📅 New day detected, resetting count');
+    await setDoc(subscriptionDoc, {
+      ...data,
+      requestTracking: {
+        count: 1,
+        date: today
+      }
+    }, { merge: true });
+    console.log('✅ Counter reset to 1 for new day');
     return true;
   }
 
-  // If we have tracking for today
-  if (data.requestTracking.count < DAILY_REQUEST_LIMIT) {
-    const requestData = {
-      count: data.requestTracking.count + 1,
-      date: today
-    };
-    await updateDoc(subscriptionDoc, {
-      requestTracking: requestData
-    });
+  // Check if under limit
+  if (currentTracking.count < DAILY_REQUEST_LIMIT) {
+    const newCount = currentTracking.count + 1;
+    console.log(`📈 Incrementing count from ${currentTracking.count} to ${newCount}`);
+    await setDoc(subscriptionDoc, {
+      ...data,
+      requestTracking: {
+        count: newCount,
+        date: today
+      }
+    }, { merge: true });
+    console.log('✅ Successfully updated count');
     return true;
   }
 
+  console.log('❌ Daily limit reached:', currentTracking.count);
   return false;
 }
 
