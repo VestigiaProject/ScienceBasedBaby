@@ -195,12 +195,19 @@ export async function queryPerplexity(question: string): Promise<CachedAnswer> {
       throw new Error('Daily request limit reached. Please try again tomorrow.');
     }
 
+    const enhancedQuery = `The user has asked something about: "${question}" Give the pros and cons after having searched answers in scientific and peer-reviewed publications exclusively, not low-quality media. 
+- CRITICAL: Format your response EXACTLY as follows, using these EXACT markers: <PROS>, </PROS>, <CONS>, </CONS>, <CITATIONS>, </CITATIONS>
+- Start each pro or con point with • (bullet point)
+- Citations must be numbered sequentially [1], [2], etc. WITHOUT bullet points
+- Include citation numbers [n] at the end of each point
+- Ensure all citations are from scientific sources. inurl:pubmed.ncbi.nlm.nih.gov`;
+
     const response = await fetch('/.netlify/functions/query-perplexity', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ question })
+      body: JSON.stringify({ question: enhancedQuery })
     });
 
     console.log('API Response status:', response.status);
@@ -221,13 +228,8 @@ export async function queryPerplexity(question: string): Promise<CachedAnswer> {
     const result = parsePerplexityResponse(data.choices[0].message.content, data);
     console.log('📝 Parsed result:', result);
 
-    if (result.pros.length === 0 && result.cons.length === 0) {
-      console.warn('⚠️ Warning: Parsed result has no pros or cons');
-      throw new Error('Failed to parse response: no valid content found');
-    }
-
     console.log('💾 Caching new answer...');
-    await cacheAnswer(question, result);
+    await cacheAnswer(question, result); // Use original question for caching
     console.log('✅ Answer cached successfully');
 
     return result;
