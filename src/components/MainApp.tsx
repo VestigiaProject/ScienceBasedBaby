@@ -7,6 +7,7 @@ import { queryPerplexity } from '../services/perplexity';
 import { NotRelevantError } from '../services/errors';
 import { useAuth } from '../contexts/AuthContext';
 import { useSubscription } from '../contexts/SubscriptionContext';
+import { CachedAnswer } from '../types/answers';
 
 export function MainApp() {
   const { user, logout } = useAuth();
@@ -15,21 +16,12 @@ export function MainApp() {
   const [error, setError] = useState<string | null>(null);
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
   const [cancelLoading, setCancelLoading] = useState(false);
-  const [results, setResults] = useState<{
-    pros: string[];
-    cons: string[];
-    citations: Array<{
-      id: number;
-      text: string;
-      url?: string;
-    }>;
-  }>({
+  const [results, setResults] = useState<CachedAnswer>({
     pros: [],
     cons: [],
     citations: []
   });
 
-  // Convert string 'false'/'true' to boolean
   const isCancelled = debugInfo?.subscriptionStatus === 'canceled' || 
     (typeof debugInfo?.cancelAtPeriodEnd === 'string' ? 
       debugInfo.cancelAtPeriodEnd === 'true' : 
@@ -40,12 +32,18 @@ export function MainApp() {
   const handleSearch = async (query: string) => {
     setIsLoading(true);
     setError(null);
+    setResults({ pros: [], cons: [], citations: [] });
+    
     try {
       const enhancedQuery = `The user has asked something about: "${query}" Give the pros and cons after having searched answers in scientific and peer-reviewed publications exclusively, not low-quality media. inurl:pubmed.ncbi.nlm.nih.gov`;
-      console.log('Starting search with query:', query);
-      const response = await queryPerplexity(enhancedQuery);
-      console.log('Setting results:', response);
-      setResults(response);
+      
+      await queryPerplexity(enhancedQuery, (partial) => {
+        setResults(current => ({
+          pros: partial.pros || current.pros,
+          cons: partial.cons || current.cons,
+          citations: partial.citations || current.citations
+        }));
+      });
     } catch (error) {
       console.error('Search error:', error);
       if (error instanceof NotRelevantError) {
@@ -132,19 +130,12 @@ export function MainApp() {
             />
           )}
           
-          {isLoading ? (
-            <div className="flex items-center gap-2">
-              <div className="w-5 h-5 border-t-2 border-blue-500 border-solid rounded-full animate-spin"></div>
-              <span className="text-gray-600">Analyzing scientific literature...</span>
-            </div>
-          ) : (
-            results && (results.pros.length > 0 || results.cons.length > 0) && (
-              <ResultsDisplay
-                pros={results.pros}
-                cons={results.cons}
-                citations={results.citations}
-              />
-            )
+          {(isLoading || results.pros.length > 0 || results.cons.length > 0) && (
+            <ResultsDisplay
+              pros={results.pros}
+              cons={results.cons}
+              citations={results.citations}
+            />
           )}
         </div>
 
