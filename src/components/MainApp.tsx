@@ -43,7 +43,8 @@ export function MainApp() {
     try {
       const enhancedQuery = `The user has asked something about: "${query}" Give the pros and cons after having searched answers in scientific and peer-reviewed publications exclusively, not low-quality media. 
 - CRITICAL: Format your response EXACTLY as follows, using these EXACT markers: <PROS>, </PROS>, <CONS>, </CONS>, <CITATIONS>, </CITATIONS>
-- Start each point with • (bullet point)
+- Start each pro or con point with • (bullet point)
+- Citations must be numbered sequentially [1], [2], etc. WITHOUT bullet points
 - Include citation numbers [n] at the end of each point
 - Ensure all citations are from scientific sources. inurl:pubmed.ncbi.nlm.nih.gov`;
       console.log('Starting search with query:', query);

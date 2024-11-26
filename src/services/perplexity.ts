@@ -136,13 +136,14 @@ function parsePerplexityResponse(content: string, rawResponse: any): CachedAnswe
       const citationLines = citationsMatch[1]
         .split('\n')
         .map(line => line.trim())
-        .filter(line => line.startsWith('['));
+        .filter(line => line && (line.startsWith('[') || line.startsWith('•')))
+        .map(line => line.startsWith('•') ? line.substring(1).trim() : line);
 
       result.citations = citationLines.map((citation, index) => {
         const url = extractUrlFromCitation(citation);
         return {
           id: index + 1,
-          text: citation.replace(/^\[\d+\]\s*/, '').trim(),
+          text: citation.replace(/^(?:\[\d+\]|\•)\s*/, '').trim(),
           url
         };
       });
