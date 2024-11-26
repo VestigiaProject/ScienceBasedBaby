@@ -34,7 +34,7 @@ async function checkAndUpdateRequestLimit(): Promise<boolean> {
   const today = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
   
   // Get current tracking or initialize new
-  const currentTracking = data.requestTracking || { count: 0, date: 0 };
+  const currentTracking = data.requestTracking || { requestCount: 0, date: 0 };
   console.log('📊 Current tracking:', currentTracking);
 
   // If it's a new day or no previous tracking
@@ -43,7 +43,7 @@ async function checkAndUpdateRequestLimit(): Promise<boolean> {
     await setDoc(subscriptionDoc, {
       ...data,
       requestTracking: {
-        count: 1,
+        requestCount: 1,
         date: today
       }
     }, { merge: true });
@@ -52,13 +52,13 @@ async function checkAndUpdateRequestLimit(): Promise<boolean> {
   }
 
   // Check if under limit
-  if (currentTracking.count < DAILY_REQUEST_LIMIT) {
-    const newCount = currentTracking.count + 1;
-    console.log(`📈 Incrementing count from ${currentTracking.count} to ${newCount}`);
+  if (!currentTracking.requestCount || currentTracking.requestCount < DAILY_REQUEST_LIMIT) {
+    const newCount = (currentTracking.requestCount || 0) + 1;
+    console.log(`📈 Incrementing count from ${currentTracking.requestCount} to ${newCount}`);
     await setDoc(subscriptionDoc, {
       ...data,
       requestTracking: {
-        count: newCount,
+        requestCount: newCount,
         date: today
       }
     }, { merge: true });
@@ -66,7 +66,7 @@ async function checkAndUpdateRequestLimit(): Promise<boolean> {
     return true;
   }
 
-  console.log('❌ Daily limit reached:', currentTracking.count);
+  console.log('❌ Daily limit reached:', currentTracking.requestCount);
   return false;
 }
 
