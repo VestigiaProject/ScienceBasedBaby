@@ -39,6 +39,7 @@ CONS:
 • List each evidence-supported risk or concern, with citation numbers in square brackets [1]
 • One point per line, starting with a bullet point, based on a scientific study.
 
+[Note: If there is no evidence-based information to support the pros or the cons on this question, respond with "No information found" on the appropriate list. The pros and cons don't have to be equally matched or balanced. There are questions where there are only cons: e.g., giving bleach to babies.]
 CITATIONS:
 • List each scientific paper or medical journal referenced
 • One citation per line, starting with [number]
