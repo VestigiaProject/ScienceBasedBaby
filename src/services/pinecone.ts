@@ -1,3 +1,4 @@
+import { findSimilarAnswer, cacheAnswer } from './pinecone';
 import { CachedAnswer } from '../types/answers';
 
 export async function findSimilarAnswer(query: string): Promise<CachedAnswer | null> {
@@ -33,14 +34,19 @@ export async function findSimilarAnswer(query: string): Promise<CachedAnswer | n
 
 export async function cacheAnswer(query: string, answer: CachedAnswer): Promise<void> {
   try {
-    console.log('💾 Caching answer for query:', query);
+    // Extract just the user's question without the formatting instructions
+    const originalQuery = query.split('"')[1] || query;
+    console.log('💾 Caching answer for query:', originalQuery);
     
     const response = await fetch('/.netlify/functions/cache-answer', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ query, answer })
+      body: JSON.stringify({ 
+        query: originalQuery,
+        answer 
+      })
     });
 
     if (!response.ok) {
