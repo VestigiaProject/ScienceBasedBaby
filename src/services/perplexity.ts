@@ -2,6 +2,7 @@ import { findSimilarAnswer, cacheAnswer } from './pinecone';
 import { checkQueryRelevancy } from './openai';
 import { NotRelevantError } from './errors';
 import { CachedAnswer } from '../types/answers';
+import { checkRequestLimit } from './requestLimit';
 
 function parsePerplexityResponse(content: string, rawResponse: any): CachedAnswer {
   const sections = content.split('###').filter(Boolean);
@@ -54,14 +55,20 @@ export async function queryPerplexity(question: string): Promise<CachedAnswer> {
       throw new NotRelevantError();
     }
 
-    // Check for cached similar answer
+    // Check for cached similar answer first
     console.log('🔍 Searching for cached similar answers...');
     const cachedAnswer = await findSimilarAnswer(question);
     if (cachedAnswer) {
       console.log('✅ Found cached answer:', cachedAnswer);
       return cachedAnswer;
     }
-    console.log('❌ No cached answer found, proceeding with Perplexity API');
+    console.log('❌ No cached answer found, checking request limit before proceeding with Perplexity API');
+
+    // Only check request limit if we need to make a new Perplexity API call
+    const limitCheckResult = await checkRequestLimit();
+    if (!limitCheckResult.allowed) {
+      throw new Error(`Daily request limit reached. Available again in ${limitCheckResult.hoursUntilReset} hours. Try rephrasing your question to find a similar cached answer.`);
+    }
 
     const response = await fetch('/.netlify/functions/query-perplexity', {
       method: 'POST',
