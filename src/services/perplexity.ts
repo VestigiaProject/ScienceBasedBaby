@@ -20,30 +20,21 @@ async function checkAndUpdateRequestLimit(): Promise<boolean> {
   const now = new Date();
   const today = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
   
-  // If it's a new day or no tracking exists, reset the counter
-  if (!data.requestTracking?.date || data.requestTracking.date !== today) {
-    const requestData = {
-      count: 1,
-      date: today
-    };
-    
-    await updateDoc(subscriptionDoc, {
-      requestTracking: requestData
-    });
-    return true;
-  }
+  const requestData = {
+    requestCount: ((data.requestTracking?.date === today) ? data.requestTracking.count : 0) + 1,
+    date: today
+  };
 
-  // Check if we're under the limit
-  if (data.requestTracking.count < DAILY_REQUEST_LIMIT) {
-    const requestData = {
-      count: data.requestTracking.count + 1,
-      date: today
-    };
-    
-    await updateDoc(subscriptionDoc, {
-      requestTracking: requestData
-    });
-    return true;
+  if (data.requestTracking?.date !== today || data.requestTracking?.count < DAILY_REQUEST_LIMIT) {
+    try {
+      await updateDoc(subscriptionDoc, {
+        requestTracking: requestData
+      });
+      return true;
+    } catch (error) {
+      console.error('Failed to update request tracking:', error);
+      return true;
+    }
   }
 
   return false;
