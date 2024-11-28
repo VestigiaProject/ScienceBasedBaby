@@ -24,7 +24,7 @@ export const handler: Handler = async (event) => {
       },
       body: JSON.stringify({
         model: 'llama-3.1-sonar-large-128k-online',
-        search_domain_filter: ['pubmed.ncbi.nlm.nih.gov'],
+        search_domain_filter: ['pubmed.ncbi.nlm.nih.gov', 'https://www.aap.org', 'https://jamanetwork.com/'],
         messages: [
           { 
             role: 'system', 
