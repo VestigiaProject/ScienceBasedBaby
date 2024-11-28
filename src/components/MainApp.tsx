@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { LogOut, AlertCircle, Menu } from 'lucide-react';
+import { LogOut, AlertCircle, Menu, Heart } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { SearchBox } from './SearchBox';
 import { ResultsDisplay } from './ResultsDisplay';
@@ -44,12 +44,9 @@ export function MainApp() {
     setError(null);
     setShowMenu(false);
     try {
-      console.log('Starting search with query:', query);
       const response = await queryPerplexity(query);
-      console.log('Setting results:', response);
       setResults(response);
     } catch (error) {
-      console.error('Search error:', error);
       if (error instanceof NotRelevantError) {
         setResults({ pros: [], cons: [], citations: [] });
       }
@@ -96,50 +93,22 @@ export function MainApp() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="container mx-auto px-4 py-8">
-        <header className="relative mb-12">
-          <div className="flex justify-between items-center mb-4 md:hidden">
+    <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white">
+      <div className="max-w-6xl mx-auto px-4 py-8">
+        {/* Navigation */}
+        <nav className="flex justify-between items-center mb-12">
+          <div className="md:hidden">
             <button
               onClick={() => setShowMenu(!showMenu)}
               className="p-2 text-gray-600 hover:text-gray-800"
             >
               <Menu className="w-6 h-6" />
             </button>
-            <span className="text-sm text-gray-600 truncate max-w-[200px]">
-              {user?.email}
-            </span>
           </div>
-
-          {showMenu && (
-            <div className="md:hidden absolute top-12 left-0 right-0 bg-white shadow-lg rounded-lg p-4 z-50">
-              <div className="flex flex-col gap-2">
-                <button
-                  onClick={() => !isCancelled && setShowCancelConfirm(true)}
-                  className={`px-4 py-2 text-gray-500 hover:text-gray-700 font-medium disabled:opacity-50 disabled:cursor-not-allowed ${
-                    isCancelled ? 'opacity-50 cursor-not-allowed' : ''
-                  }`}
-                  disabled={cancelLoading || isCancelled}
-                >
-                  {cancelLoading ? 'Canceling...' : cancelButtonText}
-                </button>
-                <button
-                  onClick={handleLogout}
-                  className="flex items-center gap-2 px-4 py-2 text-gray-700 hover:text-gray-900"
-                >
-                  <LogOut className="w-5 h-5" />
-                  Sign Out
-                </button>
-              </div>
-            </div>
-          )}
-
-          <div className="flex justify-center">
-            <Logo className="w-32 h-32 md:w-48 md:h-48" />
-          </div>
-
-          <div className="hidden md:flex md:absolute md:right-0 md:top-1/2 md:-translate-y-1/2 md:items-center md:gap-4">
+          <div className="hidden md:flex md:items-center md:gap-4">
             <span className="text-gray-600">{user?.email}</span>
+          </div>
+          <div className="hidden md:flex md:items-center md:gap-4">
             <button
               onClick={() => !isCancelled && setShowCancelConfirm(true)}
               className={`px-4 py-2 text-gray-500 hover:text-gray-700 font-medium disabled:opacity-50 disabled:cursor-not-allowed ${
@@ -157,13 +126,41 @@ export function MainApp() {
               Sign Out
             </button>
           </div>
-        </header>
+        </nav>
+
+        {showMenu && (
+          <div className="md:hidden absolute top-20 left-4 right-4 bg-white shadow-lg rounded-lg p-4 z-50">
+            <div className="flex flex-col gap-2">
+              <span className="text-gray-600 truncate">{user?.email}</span>
+              <button
+                onClick={() => !isCancelled && setShowCancelConfirm(true)}
+                className={`px-4 py-2 text-gray-500 hover:text-gray-700 font-medium disabled:opacity-50 disabled:cursor-not-allowed ${
+                  isCancelled ? 'opacity-50 cursor-not-allowed' : ''
+                }`}
+                disabled={cancelLoading || isCancelled}
+              >
+                {cancelLoading ? 'Canceling...' : cancelButtonText}
+              </button>
+              <button
+                onClick={handleLogout}
+                className="flex items-center gap-2 px-4 py-2 text-gray-700 hover:text-gray-900"
+              >
+                <LogOut className="w-5 h-5" />
+                Sign Out
+              </button>
+            </div>
+          </div>
+        )}
 
         <div className="flex flex-col items-center gap-8 max-w-4xl mx-auto">
+          <div className="flex justify-center mb-8">
+            <Logo className="w-96 h-96" />
+          </div>
+
           <div className="text-center max-w-2xl">
-            <p className="text-lg text-gray-600">
-              Get advice on pregnancy and parenting questions based on scientific studies. 
-              We show you the pros and cons, you make your opinion.
+            <p className="text-xl text-gray-600 mb-8">
+              Get clear, unbiased answers to your parenting and pregnancy questions,
+              supported by the latest scientific research.
             </p>
           </div>
 
@@ -199,8 +196,11 @@ export function MainApp() {
           </div>
         </div>
 
-        <footer className="mt-12 text-center text-xs text-gray-400">
-          <Link to="/terms-privacy" className="hover:text-gray-600">
+        <footer className="mt-12 text-center space-y-3">
+          <p className="flex items-center justify-center gap-2 text-gray-600">
+            made with <Heart className="w-4 h-4 text-blue-500 fill-current" /> for parents, by parents
+          </p>
+          <Link to="/terms-privacy" className="text-xs text-gray-400 hover:text-gray-600">
             Terms of Service & Privacy Policy
           </Link>
         </footer>
