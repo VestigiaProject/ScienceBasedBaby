@@ -13,10 +13,9 @@ const plans = [
     interval: 'month',
     priceId: 'price_1QOjlaIBNO0m5vVtNUYWIZJq', //Live: price_1QOjlaIBNO0m5vVtNUYWIZJq Test: price_1QOvt8IBNO0m5vVt0tlV9oQQ
     features: [
+      'Factual pros and cons on any question',
       'Evidence-based answers',
       'Scientific citations',
-      'Unlimited questions',
-      'Access to all features'
     ]
   },
   {
@@ -27,8 +26,7 @@ const plans = [
     features: [
       'Everything in Monthly',
       '2 months free',
-      'Priority support',
-      'Early access to new features'
+      'Priority support'
     ]
   }
 ];
