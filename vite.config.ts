@@ -14,5 +14,6 @@ export default defineConfig({
         'firebase-admin/auth'
       ]
     }
-  }
+  },
+  assetsInclude: ['**/*.svg'] // Ensure SVG files are handled as assets
 });
