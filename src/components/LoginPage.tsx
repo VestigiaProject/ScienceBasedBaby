@@ -92,6 +92,7 @@ export function LoginPage() {
 
         {/* Example Section */}
         <div className="bg-white rounded-2xl shadow-sm p-8 mb-16">
+          <h2 className="text-2xl font-bold text-center text-gray-900 mb-8">See How It Works</h2>
           <ExampleQueryDisplay />
         </div>
 
