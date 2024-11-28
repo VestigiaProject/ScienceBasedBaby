@@ -38,10 +38,6 @@ const exampleData = {
 export function ExampleQueryDisplay() {
   return (
     <div className="w-full max-w-4xl mx-auto bg-gray-50 rounded-xl p-8 space-y-6">
-      <h2 className="text-2xl font-bold text-center text-gray-900 mb-8">
-        See it in action
-      </h2>
-      
       <div className="w-full max-w-2xl mx-auto">
         <div className="relative">
           <input

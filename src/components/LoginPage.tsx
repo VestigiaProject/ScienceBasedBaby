@@ -85,6 +85,9 @@ export function LoginPage() {
           </div>
         </div>
 
+        {/* Example Query Display */}
+        <ExampleQueryDisplay />
+
         {/* How it Works */}
         <div className="space-y-12">
           <h2 className="text-3xl font-bold text-center text-gray-900">How it works</h2>
@@ -112,9 +115,6 @@ export function LoginPage() {
             </div>
           </div>
         </div>
-
-        {/* Example Query Display */}
-        <ExampleQueryDisplay />
 
         {/* Testimonials */}
         <div className="bg-white rounded-2xl shadow-lg p-8 max-w-3xl mx-auto">
