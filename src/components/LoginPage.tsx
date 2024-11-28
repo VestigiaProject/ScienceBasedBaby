@@ -37,9 +37,9 @@ export function LoginPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="max-w-6xl mx-auto px-4 py-12 space-y-20">
+      <div className="max-w-6xl mx-auto px-4 py-8 space-y-12">
         {/* Hero Section */}
-        <div className="text-center space-y-8">
+        <div className="text-center space-y-6">
           <div className="flex justify-center">
             <Logo className="w-48 h-48" />
           </div>
@@ -65,8 +65,8 @@ export function LoginPage() {
         </div>
 
         {/* Problem/Solution Statement */}
-        <div className="grid md:grid-cols-2 gap-12 items-center">
-          <div className="space-y-6">
+        <div className="grid md:grid-cols-2 gap-8 items-center">
+          <div className="space-y-4">
             <h2 className="text-3xl font-bold text-gray-900">
               Parenting is hard.<br />
               Bad advice makes it harder.
@@ -75,7 +75,7 @@ export function LoginPage() {
               Every parent wants the best for their baby, but it's tough to navigate the sea of conflicting advice. Sleep training? Baby-led weaning? Screen time? The internet is full of noise and relatives give contradictory info.
             </p>
           </div>
-          <div className="space-y-6">
+          <div className="space-y-4">
             <h2 className="text-3xl font-bold text-blue-600">
               That's where Science Based Baby steps in.
             </h2>
@@ -86,27 +86,32 @@ export function LoginPage() {
         </div>
 
         {/* Example Query Display */}
-        <ExampleQueryDisplay />
+        <div className="relative py-12">
+          <div className="absolute inset-0 bg-gradient-to-b from-blue-50 to-gray-50 rounded-3xl"></div>
+          <div className="relative">
+            <ExampleQueryDisplay />
+          </div>
+        </div>
 
         {/* How it Works */}
-        <div className="space-y-12">
+        <div className="space-y-8">
           <h2 className="text-3xl font-bold text-center text-gray-900">How it works</h2>
           <div className="grid md:grid-cols-3 gap-8">
-            <div className="space-y-4">
+            <div className="space-y-3">
               <div className="text-5xl font-bold text-blue-600">1</div>
               <h3 className="text-xl font-semibold">Type a parenting dilemma</h3>
               <p className="text-gray-600">
                 From sleep methods to feeding schedules, we cover every common or less common parenting debates.
               </p>
             </div>
-            <div className="space-y-4">
+            <div className="space-y-3">
               <div className="text-5xl font-bold text-blue-600">2</div>
               <h3 className="text-xl font-semibold">See the evidence</h3>
               <p className="text-gray-600">
                 We fetch and summarize real studies—pros, cons, and outcomes — so <em>you</em> can decide what's best.
               </p>
             </div>
-            <div className="space-y-4">
+            <div className="space-y-3">
               <div className="text-5xl font-bold text-blue-600">3</div>
               <h3 className="text-xl font-semibold">Parent with confidence</h3>
               <p className="text-gray-600">
@@ -117,7 +122,7 @@ export function LoginPage() {
         </div>
 
         {/* Testimonials */}
-        <div className="bg-white rounded-2xl shadow-lg p-8 max-w-3xl mx-auto">
+        <div className="bg-white rounded-2xl shadow-sm p-8 max-w-3xl mx-auto">
           <div className="relative h-32">
             {testimonials.map((testimonial, index) => (
               <div
@@ -145,7 +150,7 @@ export function LoginPage() {
         </div>
 
         {/* Footer */}
-        <footer className="text-center space-y-4">
+        <footer className="text-center space-y-3">
           <p className="flex items-center justify-center gap-2 text-gray-600">
             made with <Heart className="w-4 h-4 text-blue-500 fill-current" /> for parents, by parents
           </p>

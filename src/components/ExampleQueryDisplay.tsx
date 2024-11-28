@@ -37,14 +37,14 @@ const exampleData = {
 
 export function ExampleQueryDisplay() {
   return (
-    <div className="w-full max-w-4xl mx-auto bg-gray-50 rounded-xl p-8 space-y-6">
+    <div className="w-full max-w-4xl mx-auto space-y-4">
       <div className="w-full max-w-2xl mx-auto">
         <div className="relative">
           <input
             type="text"
             value={exampleData.query}
             readOnly
-            className="w-full px-4 py-3 pr-12 text-gray-700 bg-white border border-gray-300 rounded-lg focus:outline-none cursor-default"
+            className="w-full px-4 py-3 pr-12 text-gray-700 bg-white border border-gray-300 rounded-lg focus:outline-none cursor-default shadow-sm"
           />
           <div className="absolute right-2 top-1/2 -translate-y-1/2 p-2 text-gray-500">
             <Search className="w-5 h-5" />
