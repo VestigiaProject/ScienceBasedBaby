@@ -3,7 +3,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { Link } from 'react-router-dom';
 import { Logo } from './Logo';
 import { ExampleQueryDisplay } from './ExampleQueryDisplay';
-import { ArrowRight, Heart } from 'lucide-react';
+import { Heart, BookOpen, Scale, Brain } from 'lucide-react';
 
 const testimonials = [
   {
@@ -36,93 +36,93 @@ export function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="max-w-6xl mx-auto px-4 py-8 space-y-12">
-        {/* Hero Section */}
-        <div className="text-center space-y-6">
-          <div className="flex justify-center">
-            <Logo className="w-48 h-48" />
-          </div>
-          <div>
-            <h1 className="text-4xl font-bold text-gray-900 mb-4">
-              Parent smarter, not harder
-            </h1>
-            <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-              Trusted answers to everyday parenting and pregnancy dilemmas, grounded in real research — not grandma's anecdotes.
-            </p>
-          </div>
+    <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white">
+      <div className="max-w-6xl mx-auto px-4 py-8">
+        {/* Navigation */}
+        <nav className="flex justify-end mb-12">
           <button
             onClick={handleLogin}
-            className="inline-flex items-center justify-center gap-3 bg-white px-6 py-3 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 hover:border-gray-400 transition-colors duration-200 shadow-sm"
+            className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200 shadow-sm"
           >
-            <img 
-              src="https://www.google.com/favicon.ico" 
-              alt="Google" 
-              className="w-5 h-5"
-            />
             Sign in with Google
           </button>
+        </nav>
+
+        {/* Hero Section */}
+        <div className="text-center max-w-4xl mx-auto mb-16">
+          <div className="flex justify-center mb-8">
+            <Logo className="w-48 h-48" />
+          </div>
+          <h1 className="text-5xl font-bold text-gray-900 mb-6">
+            Parenting Decisions, <span className="text-blue-600">Backed by Science</span>
+          </h1>
+          <p className="text-xl text-gray-600 mb-8">
+            Get clear, unbiased answers to your parenting and pregnancy questions,
+            supported by the latest scientific research.
+          </p>
         </div>
 
-        {/* Problem/Solution Statement */}
-        <div className="grid md:grid-cols-2 gap-8 items-center">
-          <div className="space-y-4">
-            <h2 className="text-3xl font-bold text-gray-900">
-              Parenting is hard.<br />
-              Bad advice makes it harder.
-            </h2>
+        {/* Features Grid */}
+        <div className="grid md:grid-cols-3 gap-8 mb-16">
+          <div className="bg-white p-6 rounded-xl shadow-sm">
+            <BookOpen className="w-10 h-10 text-blue-600 mb-4" />
+            <h3 className="text-xl font-semibold mb-2">Evidence-Based Answers</h3>
             <p className="text-gray-600">
-              Every parent wants the best for their baby, but it's tough to navigate the sea of conflicting advice. Sleep training? Baby-led weaning? Screen time? The internet is full of noise and relatives give contradictory info.
+              All information is backed by peer-reviewed scientific studies and expert consensus.
             </p>
           </div>
-          <div className="space-y-4">
-            <h2 className="text-3xl font-bold text-blue-600">
-              That's where Science Based Baby steps in.
-            </h2>
+          <div className="bg-white p-6 rounded-xl shadow-sm">
+            <Scale className="w-10 h-10 text-blue-600 mb-4" />
+            <h3 className="text-xl font-semibold mb-2">Pros and Cons</h3>
             <p className="text-gray-600">
-              We simplify real, serious studies into bite-sized pros and cons you can actually use, and give you the sources to check for yourself.
+              Get a balanced view of different approaches, helping you make informed decisions.
+            </p>
+          </div>
+          <div className="bg-white p-6 rounded-xl shadow-sm">
+            <Brain className="w-10 h-10 text-blue-600 mb-4" />
+            <h3 className="text-xl font-semibold mb-2">Access to Research</h3>
+            <p className="text-gray-600">
+              Direct links to scientific papers and studies for those who want to dive deeper.
             </p>
           </div>
         </div>
 
-        {/* Example Query Display */}
-        <div className="relative py-12">
-          <div className="absolute inset-0 bg-gradient-to-b from-blue-50 to-gray-50 rounded-3xl"></div>
-          <div className="relative">
-            <ExampleQueryDisplay />
-          </div>
+        {/* Example Section */}
+        <div className="bg-white rounded-2xl shadow-sm p-8 mb-16">
+          <h2 className="text-2xl font-bold text-center mb-8">See it in action</h2>
+          <ExampleQueryDisplay />
         </div>
 
         {/* How it Works */}
-        <div className="space-y-8">
-          <h2 className="text-3xl font-bold text-center text-gray-900">How it works</h2>
+        <div className="text-center max-w-4xl mx-auto mb-16">
+          <h2 className="text-3xl font-bold mb-12">How it works</h2>
           <div className="grid md:grid-cols-3 gap-8">
             <div className="space-y-3">
               <div className="text-5xl font-bold text-blue-600">1</div>
-              <h3 className="text-xl font-semibold">Type a parenting dilemma</h3>
+              <h3 className="text-xl font-semibold">Ask Your Question</h3>
               <p className="text-gray-600">
-                From sleep methods to feeding schedules, we cover every common or less common parenting debates.
+                From sleep methods to feeding schedules, we cover every parenting topic.
               </p>
             </div>
             <div className="space-y-3">
               <div className="text-5xl font-bold text-blue-600">2</div>
-              <h3 className="text-xl font-semibold">See the evidence</h3>
+              <h3 className="text-xl font-semibold">Get Evidence</h3>
               <p className="text-gray-600">
-                We fetch and summarize real studies—pros, cons, and outcomes — so <em>you</em> can decide what's best.
+                We analyze real studies and present clear pros and cons.
               </p>
             </div>
             <div className="space-y-3">
               <div className="text-5xl font-bold text-blue-600">3</div>
-              <h3 className="text-xl font-semibold">Parent with confidence</h3>
+              <h3 className="text-xl font-semibold">Decide Confidently</h3>
               <p className="text-gray-600">
-                Make informed decisions, feel good about them.
+                Make informed choices backed by science.
               </p>
             </div>
           </div>
         </div>
 
         {/* Testimonials */}
-        <div className="bg-white rounded-2xl shadow-sm p-8 max-w-3xl mx-auto">
+        <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl p-8 max-w-3xl mx-auto mb-16">
           <div className="relative h-32">
             {testimonials.map((testimonial, index) => (
               <div
@@ -131,8 +131,8 @@ export function LoginPage() {
                   index === currentTestimonial ? 'opacity-100' : 'opacity-0'
                 }`}
               >
-                <p className="text-xl text-gray-600 italic mb-4">"{testimonial.quote}"</p>
-                <p className="text-gray-500">– {testimonial.author}</p>
+                <p className="text-xl text-gray-700 italic mb-4">"{testimonial.quote}"</p>
+                <p className="text-gray-600">– {testimonial.author}</p>
               </div>
             ))}
           </div>
