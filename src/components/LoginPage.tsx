@@ -1,7 +1,7 @@
 import React from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { Baby } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { Logo } from './Logo';
 
 export function LoginPage() {
   const { signInWithGoogle } = useAuth();
@@ -19,7 +19,7 @@ export function LoginPage() {
       <div className="max-w-md w-full space-y-8 bg-white p-8 rounded-xl shadow-lg">
         <div className="text-center">
           <div className="flex justify-center mb-4">
-            <Baby className="w-16 h-16 text-blue-500" />
+            <Logo className="w-16 h-16 text-blue-500" />
           </div>
           <h2 className="text-3xl font-bold text-gray-900">Science-Based Baby</h2>
           <p className="mt-2 text-gray-600">

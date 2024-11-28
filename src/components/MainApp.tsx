@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
-import { Baby, LogOut, AlertCircle } from 'lucide-react';
+import { LogOut, AlertCircle } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { SearchBox } from './SearchBox';
 import { ResultsDisplay } from './ResultsDisplay';
 import { ErrorDisplay } from './ErrorDisplay';
+import { Logo } from './Logo';
 import { queryPerplexity } from '../services/perplexity';
 import { NotRelevantError } from '../services/errors';
 import { useAuth } from '../contexts/AuthContext';
@@ -30,7 +31,7 @@ export function MainApp() {
     citations: []
   });
 
-  // Convert string 'false'/'true' to boolean
+  // Rest of the component remains unchanged
   const isCancelled = debugInfo?.subscriptionStatus === 'canceled' || 
     (typeof debugInfo?.cancelAtPeriodEnd === 'string' ? 
       debugInfo.cancelAtPeriodEnd === 'true' : 
@@ -98,7 +99,7 @@ export function MainApp() {
       <div className="container mx-auto px-4 py-8">
         <div className="flex justify-between items-center mb-12">
           <div className="flex items-center gap-3">
-            <Baby className="w-10 h-10 text-blue-500" />
+            <Logo className="w-10 h-10 text-blue-500" />
             <h1 className="text-3xl font-bold text-gray-800">Science-Based Baby</h1>
           </div>
           <div className="flex items-center gap-4">
