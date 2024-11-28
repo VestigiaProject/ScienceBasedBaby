@@ -2,6 +2,7 @@ import React from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { Link } from 'react-router-dom';
 import { Logo } from './Logo';
+import { ExampleQueryDisplay } from './ExampleQueryDisplay';
 import { ArrowRight, Heart } from 'lucide-react';
 
 const testimonials = [
@@ -111,6 +112,9 @@ export function LoginPage() {
             </div>
           </div>
         </div>
+
+        {/* Example Query Display */}
+        <ExampleQueryDisplay />
 
         {/* Testimonials */}
         <div className="bg-white rounded-2xl shadow-lg p-8 max-w-3xl mx-auto">
