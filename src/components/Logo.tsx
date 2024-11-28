@@ -1,18 +1,14 @@
 import React from 'react';
-import logoSvg from '/images/logo.svg';
-import logoGreySvg from '/images/logogrey.svg';
+import logoPng from '/images/logo.png';
 
 interface LogoProps {
   className?: string;
-  variant?: 'default' | 'grey';
 }
 
-export function Logo({ className = '', variant = 'default' }: LogoProps) {
-  const logoSource = variant === 'grey' ? logoGreySvg : logoSvg;
-  
+export function Logo({ className = '' }: LogoProps) {
   return (
     <img 
-      src={logoSource} 
+      src={logoPng} 
       className={className} 
       alt="Science Based Baby Logo"
     />

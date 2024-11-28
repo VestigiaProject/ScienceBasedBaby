@@ -96,11 +96,9 @@ export function MainApp() {
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="container mx-auto px-4 py-8">
-        <header className="flex justify-between items-center mb-16">
-          <div className="flex-1 flex justify-center">
-            <Logo className="w-48 h-48" variant="grey" />
-          </div>
-          <div className="absolute right-8 flex items-center gap-4">
+        <header className="relative flex justify-center mb-16">
+          <Logo className="w-64 h-64" />
+          <div className="absolute right-0 top-1/2 -translate-y-1/2 flex items-center gap-4">
             <span className="text-gray-600">{user?.email}</span>
             <button
               onClick={() => !isCancelled && setShowCancelConfirm(true)}

@@ -15,5 +15,5 @@ export default defineConfig({
       ]
     }
   },
-  assetsInclude: ['**/*.svg'] // Ensure SVG files are handled as assets
+  assetsInclude: ['**/*.png'] // Ensure PNG files are handled as assets
 });
