@@ -6,14 +6,14 @@ const exampleData = {
   query: "Is screen time harmful for babies under 2?",
   results: {
     pros: [
-      "Limited educational value possible when co-viewing with parents and using high-quality content [1]",
-      "Can help develop digital literacy skills when introduced appropriately [2]"
+      "Some studies report positive cognitive outcomes from interactive screen content [1]",
+      "Can support learning when used in appropriate contexts with parental involvement [2]",
+      "No direct causal relationship found between screen exposure and cognitive harm [3]"
     ],
     cons: [
-      "Associated with delayed language development in children under 2 years [1]",
-      "May interfere with sleep patterns and quality [2]",
-      "Reduces time spent in crucial face-to-face interactions and physical play [3]",
-      "Potential negative impact on attention span and cognitive development [3]"
+      "Some correlations found between screen exposure and cognitive delays [3]",
+      "May reduce time spent in crucial face-to-face interactions and physical play [1]",
+      "Potential impact on sleep patterns and quality [2]"
     ],
     citations: [
       {
@@ -28,8 +28,8 @@ const exampleData = {
       },
       {
         id: 3,
-        text: "Pediatrics. Digital Screen Time and Its Effects on Young Children. 2020.",
-        url: "https://doi.org/10.1542/peds.2020-047308"
+        text: "Screen exposure and infant cognitive development: A scoping review. Infant Behavior and Development, 2023.",
+        url: "https://pubmed.ncbi.nlm.nih.gov/36585349/"
       }
     ]
   }
