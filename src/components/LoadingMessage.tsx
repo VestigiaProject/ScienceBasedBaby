@@ -14,7 +14,7 @@ export function LoadingMessage() {
     if (currentState < loadingStates.length - 1) {
       const interval = setInterval(() => {
         setCurrentState(prev => prev + 1);
-      }, 2000);
+      }, 3500); // Increased from 2000ms to 3500ms
 
       return () => clearInterval(interval);
     }

@@ -155,7 +155,7 @@ export function MainApp() {
 
         <div className="flex flex-col items-center gap-8 max-w-4xl mx-auto">
           <div className="flex justify-center mb-4">
-            <Logo className="w-32 h-32 md:w-40 md:h-40" />
+            <Logo className="w-36 h-36 md:w-44 md:h-44" />
           </div>
 
           <div className="text-center max-w-2xl">
