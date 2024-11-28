@@ -31,7 +31,6 @@ export function MainApp() {
     citations: []
   });
 
-  // Rest of the component remains unchanged
   const isCancelled = debugInfo?.subscriptionStatus === 'canceled' || 
     (typeof debugInfo?.cancelAtPeriodEnd === 'string' ? 
       debugInfo.cancelAtPeriodEnd === 'true' : 
@@ -99,7 +98,7 @@ export function MainApp() {
       <div className="container mx-auto px-4 py-8">
         <div className="flex justify-between items-center mb-12">
           <div className="flex items-center gap-3">
-            <Logo className="w-10 h-10 text-blue-500" />
+            <Logo className="w-20 h-20" />
             <h1 className="text-3xl font-bold text-gray-800">Science-Based Baby</h1>
           </div>
           <div className="flex items-center gap-4">
