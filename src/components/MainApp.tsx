@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom';
 import { SearchBox } from './SearchBox';
 import { ResultsDisplay } from './ResultsDisplay';
 import { ErrorDisplay } from './ErrorDisplay';
+import { LoadingMessage } from './LoadingMessage';
 import { Logo } from './Logo';
 import { queryPerplexity } from '../services/perplexity';
 import { NotRelevantError } from '../services/errors';
@@ -153,8 +154,8 @@ export function MainApp() {
         )}
 
         <div className="flex flex-col items-center gap-8 max-w-4xl mx-auto">
-          <div className="flex justify-center mb-8">
-            <Logo className="w-96 h-96" />
+          <div className="flex justify-center mb-4">
+            <Logo className="w-32 h-32 md:w-40 md:h-40" />
           </div>
 
           <div className="text-center max-w-2xl">
@@ -174,10 +175,7 @@ export function MainApp() {
           )}
           
           {isLoading ? (
-            <div className="flex items-center gap-2">
-              <div className="w-5 h-5 border-t-2 border-blue-500 border-solid rounded-full animate-spin"></div>
-              <span className="text-gray-600">Analyzing scientific literature...</span>
-            </div>
+            <LoadingMessage />
           ) : (
             results && (results.pros.length > 0 || results.cons.length > 0) && (
               <ResultsDisplay
