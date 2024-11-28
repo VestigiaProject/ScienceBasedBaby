@@ -96,12 +96,11 @@ export function MainApp() {
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="container mx-auto px-4 py-8">
-        <div className="flex justify-between items-center mb-12">
-          <div className="flex items-center gap-3">
-            <Logo className="w-40 h-40" variant="grey" />
-            <h1 className="text-3xl font-bold text-gray-800">Science-Based Baby</h1>
+        <header className="flex justify-between items-center mb-16">
+          <div className="flex-1 flex justify-center">
+            <Logo className="w-48 h-48" variant="grey" />
           </div>
-          <div className="flex items-center gap-4">
+          <div className="absolute right-8 flex items-center gap-4">
             <span className="text-gray-600">{user?.email}</span>
             <button
               onClick={() => !isCancelled && setShowCancelConfirm(true)}
@@ -120,9 +119,9 @@ export function MainApp() {
               Sign Out
             </button>
           </div>
-        </div>
+        </header>
 
-        <div className="flex flex-col items-center gap-8">
+        <div className="flex flex-col items-center gap-8 max-w-4xl mx-auto">
           <div className="text-center max-w-2xl">
             <p className="text-lg text-gray-600">
               Get advice on pregnancy and parenting questions based on scientific studies. 
@@ -162,11 +161,11 @@ export function MainApp() {
           </div>
         </div>
 
-        <div className="mt-12 text-center text-xs text-gray-400">
+        <footer className="mt-12 text-center text-xs text-gray-400">
           <Link to="/terms-privacy" className="hover:text-gray-600">
             Terms of Service & Privacy Policy
           </Link>
-        </div>
+        </footer>
 
         {showCancelConfirm && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
