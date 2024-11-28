@@ -39,7 +39,10 @@ export function LoginPage() {
     <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white">
       <div className="max-w-6xl mx-auto px-4 py-8">
         {/* Navigation */}
-        <nav className="flex justify-end mb-12">
+        <nav className="flex justify-between items-center mb-12">
+          <Link to="/" className="text-xl font-bold text-gray-900 hover:text-blue-600 transition-colors">
+            Science Based Baby
+          </Link>
           <button
             onClick={handleLogin}
             className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200 shadow-sm"
@@ -89,36 +92,7 @@ export function LoginPage() {
 
         {/* Example Section */}
         <div className="bg-white rounded-2xl shadow-sm p-8 mb-16">
-          <h2 className="text-2xl font-bold text-center mb-8">See it in action</h2>
           <ExampleQueryDisplay />
-        </div>
-
-        {/* How it Works */}
-        <div className="text-center max-w-4xl mx-auto mb-16">
-          <h2 className="text-3xl font-bold mb-12">How it works</h2>
-          <div className="grid md:grid-cols-3 gap-8">
-            <div className="space-y-3">
-              <div className="text-5xl font-bold text-blue-600">1</div>
-              <h3 className="text-xl font-semibold">Ask Your Question</h3>
-              <p className="text-gray-600">
-                From sleep methods to feeding schedules, we cover every parenting topic.
-              </p>
-            </div>
-            <div className="space-y-3">
-              <div className="text-5xl font-bold text-blue-600">2</div>
-              <h3 className="text-xl font-semibold">Get Evidence</h3>
-              <p className="text-gray-600">
-                We analyze real studies and present clear pros and cons.
-              </p>
-            </div>
-            <div className="space-y-3">
-              <div className="text-5xl font-bold text-blue-600">3</div>
-              <h3 className="text-xl font-semibold">Decide Confidently</h3>
-              <p className="text-gray-600">
-                Make informed choices backed by science.
-              </p>
-            </div>
-          </div>
         </div>
 
         {/* Testimonials */}
@@ -147,6 +121,22 @@ export function LoginPage() {
               />
             ))}
           </div>
+        </div>
+
+        {/* Ready to Start CTA */}
+        <div className="text-center max-w-3xl mx-auto mb-16">
+          <h2 className="text-4xl font-bold text-gray-900 mb-4">
+            Ready to Make Informed Parenting Decisions?
+          </h2>
+          <p className="text-xl text-gray-600 mb-8">
+            Join Science Based Baby today and get access to evidence-based answers for all your parenting questions.
+          </p>
+          <button
+            onClick={handleLogin}
+            className="px-8 py-3 bg-blue-600 text-white text-lg rounded-lg hover:bg-blue-700 transition-colors duration-200 shadow-sm"
+          >
+            Sign Up Now
+          </button>
         </div>
 
         {/* Footer */}
