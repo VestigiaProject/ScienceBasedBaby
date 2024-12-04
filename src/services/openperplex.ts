@@ -7,7 +7,7 @@ export async function customSearch(userPrompt: string, systemPrompt: string) {
     user_prompt: userPrompt,
     system_prompt: systemPrompt,
     location: 'us',
-    pro_mode: false,
+    pro_mode: true,
     search_type: 'general',
     return_images: false,
     return_sources: true,
@@ -32,7 +32,10 @@ export async function customSearch(userPrompt: string, systemPrompt: string) {
     }
 
     const data = await response.json();
-    return data;
+    return {
+      ...data,
+      sources: data.sources || []
+    };
   } catch (error) {
     console.error('OpenPerplex API error:', error);
     throw error;

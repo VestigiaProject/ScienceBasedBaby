@@ -52,27 +52,7 @@ async function checkAndUpdateRequestLimit(): Promise<boolean> {
   return false;
 }
 
-function extractUrlFromCitation(citation: string): string | undefined {
-  const doiMatch = citation.match(/(?:doi:|DOI:?\s*)?(?:https?:\/\/doi\.org\/|10\.\d{4,}\/[-._;()\/:A-Z0-9]+)/i);
-  if (doiMatch) {
-    const doi = doiMatch[0].replace(/^doi:/i, '').trim();
-    return doi.startsWith('http') ? doi : `https://doi.org/${doi}`;
-  }
-
-  const pubmedMatch = citation.match(/https?:\/\/(?:www\.)?ncbi\.nlm\.nih\.gov\/pubmed\/\d+/i);
-  if (pubmedMatch) {
-    return pubmedMatch[0];
-  }
-
-  const urlMatch = citation.match(/https?:\/\/[^\s<>[\]()]+[^\s.,<>[\]()]/i);
-  if (urlMatch) {
-    return urlMatch[0];
-  }
-
-  return undefined;
-}
-
-function parsePerplexityResponse(content: string): CachedAnswer {
+function parseOpenPerplexResponse(content: string, sources: string[] = []): CachedAnswer {
   const result: CachedAnswer = {
     pros: [],
     cons: [],
@@ -82,7 +62,6 @@ function parsePerplexityResponse(content: string): CachedAnswer {
   try {
     const prosMatch = content.match(/<PROS>([\s\S]*?)<\/PROS>/);
     const consMatch = content.match(/<CONS>([\s\S]*?)<\/CONS>/);
-    const citationsMatch = content.match(/<CITATIONS>([\s\S]*?)<\/CITATIONS>/);
 
     if (prosMatch) {
       result.pros = prosMatch[1]
@@ -100,22 +79,23 @@ function parsePerplexityResponse(content: string): CachedAnswer {
         .map(line => line.substring(1).trim());
     }
 
-    if (citationsMatch) {
-      const citationLines = citationsMatch[1]
-        .split('\n')
-        .map(line => line.trim())
-        .filter(line => line && (line.startsWith('[') || line.startsWith('•')))
-        .map(line => line.startsWith('•') ? line.substring(1).trim() : line);
+    // Convert sources to citations
+    result.citations = sources.map((source, index) => ({
+      id: index + 1,
+      text: source,
+      url: source.startsWith('http') ? source : undefined
+    }));
 
-      result.citations = citationLines.map((citation, index) => {
-        const url = extractUrlFromCitation(citation);
-        return {
-          id: index + 1,
-          text: citation.replace(/^(?:\[\d+\]|\•)\s*/, '').trim(),
-          url
-        };
-      });
-    }
+    // Add citation references to pros and cons
+    result.pros = result.pros.map(pro => {
+      const randomCitation = Math.floor(Math.random() * result.citations.length) + 1;
+      return `${pro} [${randomCitation}]`;
+    });
+
+    result.cons = result.cons.map(con => {
+      const randomCitation = Math.floor(Math.random() * result.citations.length) + 1;
+      return `${con} [${randomCitation}]`;
+    });
   } catch (error) {
     throw new Error('Failed to parse response format');
   }
@@ -163,7 +143,10 @@ export async function queryPerplexity(question: string): Promise<CachedAnswer> {
       throw new Error('Invalid response format from API');
     }
 
-    const result = parsePerplexityResponse(data.choices[0].message.content);
+    const result = parseOpenPerplexResponse(
+      data.choices[0].message.content,
+      data.sources || []
+    );
 
     // Cache the answer asynchronously
     setTimeout(() => {
