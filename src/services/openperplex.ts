@@ -16,15 +16,14 @@ export async function customSearch(userPrompt: string, systemPrompt: string) {
     top_p: 0.9
   };
 
-  const params = new URLSearchParams(options as Record<string, string>);
-
   try {
-    const response = await fetch(`${BASE_URL}/custom_search?${params}`, {
-      method: 'GET',
+    const response = await fetch(`${BASE_URL}/custom_search`, {
+      method: 'POST',
       headers: {
         'X-API-Key': process.env.OPENPERPLEX_API_KEY || '',
         'Content-Type': 'application/json'
-      }
+      },
+      body: JSON.stringify(options)
     });
 
     if (!response.ok) {
