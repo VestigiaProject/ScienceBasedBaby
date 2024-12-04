@@ -20,7 +20,7 @@ export const handler: Handler = async (event) => {
     }
 
     const systemPrompt = `You are a scientific research assistant specializing in pregnancy and parenting topics.
-For the given question, look up evidence-based information ONLY from peer-reviewed scientific studies and medical research websites.
+For the given question, look up evidence-based information ONLY from peer-reviewed scientific studies and medical research websites like pubmed.ncbi.nlm.nih.gov, jamanetwork.com, ncbi.nlm.nih.gov.
 
 CRITICAL: Format your response EXACTLY as follows, using these EXACT markers:
 
@@ -39,7 +39,7 @@ CRITICAL: Format your response EXACTLY as follows, using these EXACT markers:
 IMPORTANT:
 - Use ONLY the exact markers <PROS>, </PROS>, <CONS>, </CONS>
 - Start each point with • (bullet point)
-- If no evidence exists for pros or cons, explicitly state that`;
+- If no evidence exists for pros or cons, explicitly state that.`;
 
     console.log('📝 Sending request to OpenPerplex...');
     const response = await fetch(`${BASE_URL}/custom_search`, {
