@@ -2,6 +2,7 @@ import { Handler } from '@netlify/functions';
 import { initializeApp, getApps, cert } from 'firebase-admin/app';
 import { getFirestore } from 'firebase-admin/firestore';
 import { getAuth } from 'firebase-admin/auth';
+import { enhanceQuery } from '../../src/utils/queryEnhancer';
 
 const BASE_URL = 'https://44c57909-d9e2-41cb-9244-9cd4a443cb41.app.bhs.ai.cloud.ovh.net';
 const DAILY_REQUEST_LIMIT = 35;
@@ -139,30 +140,11 @@ export const handler: Handler = async (event) => {
       };
     }
 
-    const systemPrompt = `You are a scientific research assistant specializing in pregnancy and parenting topics.
-For the given question, look up evidence-based information ONLY from peer-reviewed scientific studies and medical research websites like pubmed.ncbi.nlm.nih.gov, jamanetwork.com, ncbi.nlm.nih.gov.
-
-CRITICAL: Format your response EXACTLY as follows, using these EXACT markers:
-
-<PROS>
-• Each evidence-supported benefit or positive finding
-• One point per line, starting with •
-• If no evidence-based pros exist, include ONLY something like: • No scientifically proven benefits found
-</PROS>
-
-<CONS>
-• Each evidence-supported risk or concern
-• One point per line, starting with •
-• If no evidence-based cons exist, include ONLY something like: • No scientifically proven risks found
-</CONS>
-
-IMPORTANT:
-- Use ONLY the exact markers <PROS>, </PROS>, <CONS>, </CONS>
-- Start each point with • (bullet point)
-- If no evidence exists for pros or cons, explicitly state that.`;
+    // Use the query enhancer
+    const { userPrompt, systemPrompt } = enhanceQuery(question);
 
     const requestBody = {
-      user_prompt: question,
+      user_prompt: userPrompt,
       system_prompt: systemPrompt,
       location: 'us',
       pro_mode: true,
@@ -177,6 +159,7 @@ IMPORTANT:
     console.log('📝 OpenPerplex Request:', {
       userId,
       question,
+      userPrompt,
       systemPrompt,
       requestConfig: requestBody
     });
@@ -203,7 +186,8 @@ IMPORTANT:
       responseLength: data.llm_response?.length,
       sourcesCount: data.sources?.length,
       responseTime: data.response_time,
-      fullResponse: data.llm_response // Log the full response
+      fullResponse: data.llm_response,
+      sources: data.sources
     });
 
     return {
