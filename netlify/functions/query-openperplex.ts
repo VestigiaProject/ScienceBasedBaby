@@ -1,6 +1,57 @@
 import { Handler } from '@netlify/functions';
+import { initializeApp, getApps, cert } from 'firebase-admin/app';
+import { getFirestore } from 'firebase-admin/firestore';
+import { getAuth } from 'firebase-admin/auth';
 
 const BASE_URL = 'https://44c57909-d9e2-41cb-9244-9cd4a443cb41.app.bhs.ai.cloud.ovh.net';
+const DAILY_REQUEST_LIMIT = 35;
+
+if (!getApps().length) {
+  initializeApp({
+    credential: cert(JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT!)),
+  });
+}
+
+const db = getFirestore();
+
+async function checkAndUpdateRequestLimit(userId: string): Promise<boolean> {
+  const subscriptionDoc = await db.collection('subscriptions').doc(userId).get();
+  const data = subscriptionDoc.data();
+
+  if (!data) {
+    throw new Error('No subscription data found');
+  }
+
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+  
+  const currentTracking = data.requestTracking || { requestCount: 0, date: 0 };
+
+  if (currentTracking.date !== today) {
+    await subscriptionDoc.ref.set({
+      ...data,
+      requestTracking: {
+        requestCount: 1,
+        date: today
+      }
+    }, { merge: true });
+    return true;
+  }
+
+  if (!currentTracking.requestCount || currentTracking.requestCount < DAILY_REQUEST_LIMIT) {
+    const newCount = (currentTracking.requestCount || 0) + 1;
+    await subscriptionDoc.ref.set({
+      ...data,
+      requestTracking: {
+        requestCount: newCount,
+        date: today
+      }
+    }, { merge: true });
+    return true;
+  }
+
+  return false;
+}
 
 export const handler: Handler = async (event) => {
   if (event.httpMethod !== 'POST') {
@@ -9,6 +60,17 @@ export const handler: Handler = async (event) => {
 
   try {
     console.log('🔍 Starting OpenPerplex query...');
+    
+    // Verify authentication
+    const authHeader = event.headers.authorization;
+    if (!authHeader?.startsWith('Bearer ')) {
+      return { statusCode: 401, body: JSON.stringify({ error: 'Unauthorized' }) };
+    }
+
+    const token = authHeader.split('Bearer ')[1];
+    const decodedToken = await getAuth().verifyIdToken(token);
+    const userId = decodedToken.uid;
+
     const { question } = JSON.parse(event.body || '');
 
     if (!question) {
@@ -16,6 +78,15 @@ export const handler: Handler = async (event) => {
       return {
         statusCode: 400,
         body: JSON.stringify({ error: 'Question is required' })
+      };
+    }
+
+    // Check request limit
+    const canMakeRequest = await checkAndUpdateRequestLimit(userId);
+    if (!canMakeRequest) {
+      return {
+        statusCode: 429,
+        body: JSON.stringify({ error: 'Daily request limit reached. Please try again tomorrow.' })
       };
     }
 
