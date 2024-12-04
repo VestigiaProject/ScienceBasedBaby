@@ -1,34 +1,26 @@
 import { Handler } from '@netlify/functions';
 
 export const handler: Handler = async (event) => {
-  if (event.httpMethod !== 'POST') {
-    return { statusCode: 405, body: 'Method Not Allowed' };
-  }
-
-  try {
-    const { question } = JSON.parse(event.body || '');
-
-    if (!question) {
-      return {
-        statusCode: 400,
-        body: JSON.stringify({ error: 'Question is required' })
-      };
+    if (event.httpMethod !== 'POST') {
+        return { statusCode: 405, body: 'Method Not Allowed' };
     }
 
-    const response = await fetch('https://api.perplexity.ai/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${process.env.PERPLEXITY_API_KEY}`
-      },
-      body: JSON.stringify({
-        model: 'llama-3.1-sonar-large-128k-online',
-        search_domain_filter: ['pubmed.ncbi.nlm.nih.gov', 'https://www.aap.org', 'https://jamanetwork.com/'],
-        messages: [
-          { 
-            role: 'system', 
-            content: `You are a scientific research assistant specializing in pregnancy and parenting topics. 
+    try {
+        const { question } = JSON.parse(event.body || '');
+
+        if (!question) {
+            return {
+                statusCode: 400,
+                body: JSON.stringify({ error: 'Question is required' })
+            };
+        }
+
+        const baseUrl = 'https://44c57909-d9e2-41cb-9244-9cd4a443cb41.app.bhs.ai.cloud.ovh.net';
+        const apiKey = process.env.OPENPERPLEX_API_KEY;
+
+        const options = {
+            user_prompt: question,
+            system_prompt: `You are a scientific research assistant specializing in pregnancy and parenting topics.
 For the given question, look up evidence-based information ONLY from peer-reviewed scientific studies and medical research websites.
 
 CRITICAL: Format your response EXACTLY as follows, using these EXACT markers:
@@ -57,32 +49,45 @@ IMPORTANT:
 - Include citation numbers [n] at the end of each point
 - Citations must be numbered sequentially [1], [2], etc. WITHOUT bullet points
 - If no evidence exists for pros or cons, explicitly state that
-- Ensure all citations are from scientific sources`
-          },
-          { role: 'user', content: question }
-        ]
-      })
-    });
+- Ensure all citations are from scientific sources`,
+            location: 'fr',
+            pro_mode: false,
+            search_type: "general",
+            return_images: false,
+            return_sources: false,
+            recency_filter: "anytime",
+            temperature: 0.2,
+            top_p: 0.9
+        };
 
-    if (!response.ok) {
-      const errorData = await response.text();
-      console.error('Perplexity API Error:', errorData);
-      throw new Error(`API request failed: ${response.status} ${errorData}`);
+        const params = new URLSearchParams(options);
+
+        const response = await fetch(`${baseUrl}/custom_search?${params}`, {
+            method: 'GET',
+            headers: {
+                'X-API-Key': apiKey,
+                'Content-Type': 'application/json'
+            }
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.detail || `HTTP error! status: ${response.status}`);
+        }
+
+        const data = await response.json();
+        return {
+            statusCode: 200,
+            body: JSON.stringify(data)
+        };
+    } catch (error) {
+        console.error('Error:', error);
+        return {
+            statusCode: 500,
+            body: JSON.stringify({
+                error: 'Failed to query OpenPerplex API',
+                details: error instanceof Error ? error.message : 'Unknown error'
+            })
+        };
     }
-
-    const data = await response.json();
-    return {
-      statusCode: 200,
-      body: JSON.stringify(data)
-    };
-  } catch (error) {
-    console.error('Perplexity API error:', error);
-    return {
-      statusCode: 500,
-      body: JSON.stringify({ 
-        error: 'Failed to query Perplexity API',
-        details: error instanceof Error ? error.message : 'Unknown error'
-      })
-    };
-  }
-}
+};
