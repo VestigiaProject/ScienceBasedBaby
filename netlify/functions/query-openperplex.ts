@@ -161,6 +161,26 @@ IMPORTANT:
 - Start each point with • (bullet point)
 - If no evidence exists for pros or cons, explicitly state that.`;
 
+    const requestBody = {
+      user_prompt: question,
+      system_prompt: systemPrompt,
+      location: 'us',
+      pro_mode: true,
+      search_type: 'general',
+      return_images: false,
+      return_sources: true,
+      recency_filter: 'anytime',
+      temperature: 0.2,
+      top_p: 0.9
+    };
+
+    console.log('📝 OpenPerplex Request:', {
+      userId,
+      question,
+      systemPrompt,
+      requestConfig: requestBody
+    });
+
     console.log('📝 Sending request to OpenPerplex...');
     const response = await fetch(`${BASE_URL}/custom_search`, {
       method: 'POST',
@@ -168,22 +188,12 @@ IMPORTANT:
         'X-API-Key': process.env.OPENPERPLEX_API_KEY || '',
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify({
-        user_prompt: question,
-        system_prompt: systemPrompt,
-        location: 'us',
-        pro_mode: true,
-        search_type: 'general',
-        return_images: false,
-        return_sources: true,
-        recency_filter: 'anytime',
-        temperature: 0.2,
-        top_p: 0.9
-      })
+      body: JSON.stringify(requestBody)
     });
 
     if (!response.ok) {
       const errorData = await response.json();
+      console.error('❌ OpenPerplex API error response:', errorData);
       throw new Error(errorData.detail || `HTTP error! status: ${response.status}`);
     }
 
@@ -192,7 +202,8 @@ IMPORTANT:
       hasResponse: !!data.llm_response,
       responseLength: data.llm_response?.length,
       sourcesCount: data.sources?.length,
-      responseTime: data.response_time
+      responseTime: data.response_time,
+      fullResponse: data.llm_response // Log the full response
     });
 
     return {
