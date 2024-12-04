@@ -2,6 +2,13 @@ import { Handler } from '@netlify/functions';
 
 const BASE_URL = 'https://44c57909-d9e2-41cb-9244-9cd4a443cb41.app.bhs.ai.cloud.ovh.net';
 
+function enhanceQuery(question: string): string {
+  return `The user has asked something about: "${question}" Give the pros and cons after having searched answers in scientific and peer-reviewed publications exclusively, not low-quality media. Only search in sites like https://pubmed.ncbi.nlm.nih.gov/, https://jamanetwork.com/ or https://www.ncbi.nlm.nih.gov/guide/all/. 
+- CRITICAL: Format your response EXACTLY as follows, using these EXACT markers: <PROS>, </PROS>, <CONS>, </CONS>
+- Start each pro or con point with • (bullet point)
+inurl:'pubmed.ncbi.nlm.nih.gov', inurl:'jamanetwork.com', inurl:'ncbi.nlm.nih.gov'`;
+}
+
 export const handler: Handler = async (event) => {
   if (event.httpMethod !== 'POST') {
     return { statusCode: 405, body: 'Method Not Allowed' };
@@ -38,8 +45,10 @@ Format your response EXACTLY as follows, using these EXACT markers:
 [3] And so on...
 </CITATIONS>`;
 
+    const enhancedQuestion = enhanceQuery(question);
+
     const options = {
-      user_prompt: question,
+      user_prompt: enhancedQuestion,
       system_prompt: systemPrompt,
       location: 'us',
       pro_mode: false,
