@@ -11,8 +11,14 @@ export interface SearchOptions {
   top_p?: number;
 }
 
+export interface OpenPerplexSource {
+  title: string;
+  link: string;
+  snippet: string;
+}
+
 export interface OpenPerplexResponse {
   llm_response: string;
   response_time: number;
-  sources?: string[];
+  sources?: OpenPerplexSource[];
 }

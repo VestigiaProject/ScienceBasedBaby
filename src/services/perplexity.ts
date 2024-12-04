@@ -2,6 +2,8 @@ import { findSimilarAnswer, cacheAnswer } from './pinecone';
 import { checkQueryRelevancy } from './openai';
 import { NotRelevantError } from './errors';
 import { CachedAnswer } from '../types/answers';
+import { OpenPerplexSource } from '../types/openperplex';
+import { convertSourcesToCitations, addCitationsToPoints, parseContentSections } from '../utils/sourceParser';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { auth, db } from '../config/firebase';
 
@@ -52,59 +54,20 @@ async function checkAndUpdateRequestLimit(): Promise<boolean> {
   return false;
 }
 
-function parseOpenPerplexResponse(content: string, sources: string[] = []): CachedAnswer {
-  const result: CachedAnswer = {
-    pros: [],
-    cons: [],
-    citations: []
-  };
-
-  try {
-    const prosMatch = content.match(/<PROS>([\s\S]*?)<\/PROS>/);
-    const consMatch = content.match(/<CONS>([\s\S]*?)<\/CONS>/);
-
-    if (prosMatch) {
-      result.pros = prosMatch[1]
-        .split('\n')
-        .map(line => line.trim())
-        .filter(line => line.startsWith('•'))
-        .map(line => line.substring(1).trim());
-    }
-
-    if (consMatch) {
-      result.cons = consMatch[1]
-        .split('\n')
-        .map(line => line.trim())
-        .filter(line => line.startsWith('•'))
-        .map(line => line.substring(1).trim());
-    }
-
-    // Convert sources to citations
-    result.citations = sources.map((source, index) => ({
-      id: index + 1,
-      text: source,
-      url: source.startsWith('http') ? source : undefined
-    }));
-
-    // Add citation references to pros and cons
-    result.pros = result.pros.map(pro => {
-      const randomCitation = Math.floor(Math.random() * result.citations.length) + 1;
-      return `${pro} [${randomCitation}]`;
-    });
-
-    result.cons = result.cons.map(con => {
-      const randomCitation = Math.floor(Math.random() * result.citations.length) + 1;
-      return `${con} [${randomCitation}]`;
-    });
-  } catch (error) {
-    throw new Error('Failed to parse response format');
-  }
-
-  if (result.pros.length === 0 && result.cons.length === 0) {
+function parseOpenPerplexResponse(content: string, sources: OpenPerplexSource[] = []): CachedAnswer {
+  const { pros, cons } = parseContentSections(content);
+  
+  if (pros.length === 0 && cons.length === 0) {
     throw new Error('Invalid response format: no pros or cons found');
   }
 
-  return result;
+  const citations = convertSourcesToCitations(sources);
+  
+  return {
+    pros: addCitationsToPoints(pros, citations.length),
+    cons: addCitationsToPoints(cons, citations.length),
+    citations
+  };
 }
 
 export async function queryPerplexity(question: string): Promise<CachedAnswer> {
