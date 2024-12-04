@@ -14,43 +14,92 @@ if (!getApps().length) {
 
 const db = getFirestore();
 
-async function checkAndUpdateRequestLimit(userId: string): Promise<boolean> {
-  const subscriptionDoc = await db.collection('subscriptions').doc(userId).get();
-  const data = subscriptionDoc.data();
-
-  if (!data) {
-    throw new Error('No subscription data found');
-  }
-
-  const now = new Date();
-  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+async function initializeSubscriptionData(userId: string) {
+  const subscriptionRef = db.collection('subscriptions').doc(userId);
   
-  const currentTracking = data.requestTracking || { requestCount: 0, date: 0 };
-
-  if (currentTracking.date !== today) {
-    await subscriptionDoc.ref.set({
-      ...data,
-      requestTracking: {
-        requestCount: 1,
-        date: today
+  try {
+    await db.runTransaction(async (transaction) => {
+      const doc = await transaction.get(subscriptionRef);
+      const data = doc.data();
+      
+      if (!data) {
+        // Initialize with default values if no data exists
+        transaction.set(subscriptionRef, {
+          status: 'active', // Assuming active since they can make requests
+          currentPeriodStart: Date.now(),
+          currentPeriodEnd: Date.now() + (30 * 24 * 60 * 60 * 1000), // 30 days from now
+          cancelAtPeriodEnd: false,
+          requestTracking: {
+            requestCount: 0,
+            date: 0
+          },
+          updatedAt: Date.now()
+        });
+      } else if (!data.requestTracking) {
+        // Add request tracking if missing
+        transaction.update(subscriptionRef, {
+          requestTracking: {
+            requestCount: 0,
+            date: 0
+          },
+          updatedAt: Date.now()
+        });
       }
-    }, { merge: true });
-    return true;
+    });
+  } catch (error) {
+    console.error('Failed to initialize subscription data:', error);
+    throw error;
   }
+}
 
-  if (!currentTracking.requestCount || currentTracking.requestCount < DAILY_REQUEST_LIMIT) {
-    const newCount = (currentTracking.requestCount || 0) + 1;
-    await subscriptionDoc.ref.set({
-      ...data,
-      requestTracking: {
-        requestCount: newCount,
-        date: today
+async function checkAndUpdateRequestLimit(userId: string): Promise<boolean> {
+  const subscriptionRef = db.collection('subscriptions').doc(userId);
+  
+  try {
+    let result = false;
+    
+    await db.runTransaction(async (transaction) => {
+      const doc = await transaction.get(subscriptionRef);
+      const data = doc.data();
+
+      if (!data || !data.requestTracking) {
+        await initializeSubscriptionData(userId);
+        result = true;
+        return;
       }
-    }, { merge: true });
-    return true;
-  }
 
-  return false;
+      const now = new Date();
+      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+      
+      const currentTracking = data.requestTracking;
+
+      if (currentTracking.date !== today) {
+        transaction.update(subscriptionRef, {
+          requestTracking: {
+            requestCount: 1,
+            date: today
+          },
+          updatedAt: Date.now()
+        });
+        result = true;
+      } else if (!currentTracking.requestCount || currentTracking.requestCount < DAILY_REQUEST_LIMIT) {
+        const newCount = (currentTracking.requestCount || 0) + 1;
+        transaction.update(subscriptionRef, {
+          requestTracking: {
+            requestCount: newCount,
+            date: today
+          },
+          updatedAt: Date.now()
+        });
+        result = true;
+      }
+    });
+
+    return result;
+  } catch (error) {
+    console.error('Failed to check/update request limit:', error);
+    throw error;
+  }
 }
 
 export const handler: Handler = async (event) => {
