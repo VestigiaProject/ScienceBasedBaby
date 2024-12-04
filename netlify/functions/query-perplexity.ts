@@ -17,32 +17,26 @@ export const handler: Handler = async (event) => {
       };
     }
 
-    const systemPrompt = `You are a scientific research assistant specializing in pregnancy and parenting topics. 
-For the given question, look up evidence-based information ONLY from peer-reviewed scientific studies and medical research websites.
-Format your response EXACTLY as follows:
-<PROS>
-• Each evidence-supported benefit or positive finding
-• One point per line, starting with • and citation numbers in [n]
-</PROS>
-<CONS>
-• Each evidence-supported risk or concern
-• One point per line, starting with • and citation numbers in [n]
-</CONS>`;
+    const enhancedQuery = `The user has asked something about: "${question}" Give the pros and cons after having searched answers in scientific and peer-reviewed publications exclusively, not low-quality media. Only search in sites like https://pubmed.ncbi.nlm.nih.gov/, https://jamanetwork.com/ or https://www.ncbi.nlm.nih.gov/guide/all/. 
+- CRITICAL: Format your response EXACTLY as follows, using these EXACT markers: <PROS>, </PROS>, <CONS>, </CONS>
+- Start each pro or con point with • (bullet point)
+- Include citation numbers [n] at the end of each point`;
 
     const params = new URLSearchParams({
-      system_prompt: systemPrompt,
-      user_prompt: question,
+      query: enhancedQuery,
       location: 'us',
       pro_mode: 'true',
+      response_language: 'en',
+      answer_type: 'text',
+      verbose_mode: 'false',
       search_type: 'general',
+      return_citations: 'false',
       return_sources: 'true',
       return_images: 'false',
-      temperature: '0.2',
-      top_p: '0.9',
       recency_filter: 'anytime'
     });
 
-    const response = await fetch(`${OPENPERPLEX_BASE_URL}/custom_search?${params}`, {
+    const response = await fetch(`${OPENPERPLEX_BASE_URL}/search?${params}`, {
       method: 'GET',
       headers: {
         'X-API-Key': process.env.OPENPERPLEX_API_KEY!,
@@ -58,17 +52,9 @@ Format your response EXACTLY as follows:
 
     const data = await response.json();
 
-    if (!data.llm_response) {
-      throw new Error('Invalid response format from API');
-    }
-
     return {
       statusCode: 200,
-      body: JSON.stringify({
-        llm_response: data.llm_response,
-        sources: data.sources || [],
-        response_time: data.response_time
-      })
+      body: JSON.stringify(data)
     };
   } catch (error) {
     console.error('OpenPerplex API error:', error);

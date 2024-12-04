@@ -56,7 +56,7 @@ function parseResponse(content: string, sources: Source[]): CachedAnswer {
   const result: CachedAnswer = {
     pros: [],
     cons: [],
-    sources: sources || []
+    sources
   };
 
   try {
@@ -116,27 +116,24 @@ export async function queryPerplexity(question: string): Promise<CachedAnswer> {
     });
     
     if (!response.ok) {
-      const errorText = await response.text();
-      console.error('API error response:', errorText);
       throw new Error(`API request failed: ${response.status}`);
     }
 
     const data = await response.json();
 
-    if (!data.llm_response) {
+    if (!data.llm_response || !data.sources) {
       throw new Error('Invalid response format from API');
     }
 
-    const result = parseResponse(data.llm_response, data.sources || []);
+    const result = parseResponse(data.llm_response, data.sources);
 
     // Cache the answer asynchronously
     setTimeout(() => {
-      cacheAnswer(question, result).catch(console.error);
+      cacheAnswer(question, result).catch(() => {});
     }, 0);
 
     return result;
   } catch (error) {
-    console.error('Query error:', error);
     if (error instanceof NotRelevantError) {
       throw error;
     }
