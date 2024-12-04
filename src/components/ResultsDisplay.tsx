@@ -1,46 +1,15 @@
 import React from 'react';
-import { CheckCircle, XCircle, Link } from 'lucide-react';
-
-interface Citation {
-  id: number;
-  text: string;
-  url?: string;
-}
+import { CheckCircle, XCircle, Link, ExternalLink } from 'lucide-react';
+import { Source } from '../types/answers';
 
 interface ResultsDisplayProps {
   pros: string[];
   cons: string[];
-  citations: Citation[];
+  sources: Source[];
 }
 
-export function ResultsDisplay({ pros, cons, citations }: ResultsDisplayProps) {
+export function ResultsDisplay({ pros, cons, sources }: ResultsDisplayProps) {
   if (!pros.length && !cons.length) return null;
-
-  const renderText = (text: string) => {
-    // Replace citation numbers [n] with linked superscript
-    return text.split(/(\[\d+\])/).map((part, index) => {
-      const citationMatch = part.match(/\[(\d+)\]/);
-      if (citationMatch) {
-        const citationId = parseInt(citationMatch[1], 10);
-        const citation = citations.find(c => c.id === citationId);
-        if (citation) {
-          return (
-            <sup key={index} className="ml-0.5">
-              <a
-                href={citation.url || '#citations'}
-                className="text-blue-600 hover:text-blue-800"
-                target={citation.url ? "_blank" : undefined}
-                rel={citation.url ? "noopener noreferrer" : undefined}
-              >
-                [{citationId}]
-              </a>
-            </sup>
-          );
-        }
-      }
-      return part;
-    });
-  };
 
   return (
     <div className="w-full max-w-4xl space-y-6">
@@ -54,7 +23,7 @@ export function ResultsDisplay({ pros, cons, citations }: ResultsDisplayProps) {
             {pros.map((pro, index) => (
               <li key={index} className="flex items-start gap-2">
                 <span className="text-green-600 mt-1">•</span>
-                <span>{renderText(pro)}</span>
+                <span>{pro}</span>
               </li>
             ))}
           </ul>
@@ -69,37 +38,40 @@ export function ResultsDisplay({ pros, cons, citations }: ResultsDisplayProps) {
             {cons.map((con, index) => (
               <li key={index} className="flex items-start gap-2">
                 <span className="text-red-600 mt-1">•</span>
-                <span>{renderText(con)}</span>
+                <span>{con}</span>
               </li>
             ))}
           </ul>
         </div>
       </div>
 
-      {citations.length > 0 && (
-        <div id="citations" className="bg-white rounded-lg shadow-md p-6">
+      {sources.length > 0 && (
+        <div className="bg-white rounded-lg shadow-md p-6">
           <h2 className="text-lg font-semibold text-gray-700 flex items-center gap-2 mb-4">
             <Link className="w-5 h-5" />
-            Scientific Citations
+            Scientific Sources
           </h2>
-          <ol className="space-y-2 list-decimal list-inside">
-            {citations.map((citation) => (
-              <li key={citation.id} className="text-sm text-gray-600">
-                {citation.url ? (
-                  <a
-                    href={citation.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="hover:text-blue-600"
-                  >
-                    {citation.text}
-                  </a>
-                ) : (
-                  citation.text
-                )}
+          <ul className="space-y-4">
+            {sources.map((source, index) => (
+              <li key={index} className="text-sm">
+                <a
+                  href={source.link}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="block hover:bg-gray-50 rounded-lg p-3 transition-colors"
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <h3 className="font-medium text-blue-600 hover:text-blue-800 flex-1">
+                      {source.title}
+                    </h3>
+                    <ExternalLink className="w-4 h-4 text-gray-400 flex-shrink-0 mt-1" />
+                  </div>
+                  <p className="text-gray-600 mt-1 line-clamp-2">{source.snippet}</p>
+                  <p className="text-gray-400 text-xs mt-1">{source.link}</p>
+                </a>
               </li>
             ))}
-          </ol>
+          </ul>
         </div>
       )}
     </div>

@@ -1,9 +1,11 @@
+export interface Source {
+  title: string;
+  link: string;
+  snippet: string;
+}
+
 export interface CachedAnswer {
   pros: string[];
   cons: string[];
-  citations: Array<{
-    id: number;
-    text: string;
-    url?: string;
-  }>;
+  sources: Source[];
 }

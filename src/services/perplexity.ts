@@ -1,7 +1,7 @@
 import { findSimilarAnswer, cacheAnswer } from './pinecone';
 import { checkQueryRelevancy } from './openai';
 import { NotRelevantError } from './errors';
-import { CachedAnswer } from '../types/answers';
+import { CachedAnswer, Source } from '../types/answers';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { auth, db } from '../config/firebase';
 
@@ -52,37 +52,16 @@ async function checkAndUpdateRequestLimit(): Promise<boolean> {
   return false;
 }
 
-function extractUrlFromCitation(citation: string): string | undefined {
-  const doiMatch = citation.match(/(?:doi:|DOI:?\s*)?(?:https?:\/\/doi\.org\/|10\.\d{4,}\/[-._;()\/:A-Z0-9]+)/i);
-  if (doiMatch) {
-    const doi = doiMatch[0].replace(/^doi:/i, '').trim();
-    return doi.startsWith('http') ? doi : `https://doi.org/${doi}`;
-  }
-
-  const pubmedMatch = citation.match(/https?:\/\/(?:www\.)?ncbi\.nlm\.nih\.gov\/pubmed\/\d+/i);
-  if (pubmedMatch) {
-    return pubmedMatch[0];
-  }
-
-  const urlMatch = citation.match(/https?:\/\/[^\s<>[\]()]+[^\s.,<>[\]()]/i);
-  if (urlMatch) {
-    return urlMatch[0];
-  }
-
-  return undefined;
-}
-
-function parsePerplexityResponse(content: string): CachedAnswer {
+function parseResponse(content: string, sources: Source[]): CachedAnswer {
   const result: CachedAnswer = {
     pros: [],
     cons: [],
-    citations: []
+    sources
   };
 
   try {
     const prosMatch = content.match(/<PROS>([\s\S]*?)<\/PROS>/);
     const consMatch = content.match(/<CONS>([\s\S]*?)<\/CONS>/);
-    const citationsMatch = content.match(/<CITATIONS>([\s\S]*?)<\/CITATIONS>/);
 
     if (prosMatch) {
       result.pros = prosMatch[1]
@@ -98,23 +77,6 @@ function parsePerplexityResponse(content: string): CachedAnswer {
         .map(line => line.trim())
         .filter(line => line.startsWith('•'))
         .map(line => line.substring(1).trim());
-    }
-
-    if (citationsMatch) {
-      const citationLines = citationsMatch[1]
-        .split('\n')
-        .map(line => line.trim())
-        .filter(line => line && (line.startsWith('[') || line.startsWith('•')))
-        .map(line => line.startsWith('•') ? line.substring(1).trim() : line);
-
-      result.citations = citationLines.map((citation, index) => {
-        const url = extractUrlFromCitation(citation);
-        return {
-          id: index + 1,
-          text: citation.replace(/^(?:\[\d+\]|\•)\s*/, '').trim(),
-          url
-        };
-      });
     }
   } catch (error) {
     throw new Error('Failed to parse response format');
@@ -145,19 +107,12 @@ export async function queryPerplexity(question: string): Promise<CachedAnswer> {
       throw new Error('Daily request limit reached. Please try again tomorrow.');
     }
 
-    const enhancedQuery = `The user has asked something about: "${question}" Give the pros and cons after having searched answers in scientific and peer-reviewed publications exclusively, not low-quality media. Only search in sites like https://pubmed.ncbi.nlm.nih.gov/, https://jamanetwork.com/ or https://www.ncbi.nlm.nih.gov/guide/all/. 
-- CRITICAL: Format your response EXACTLY as follows, using these EXACT markers: <PROS>, </PROS>, <CONS>, </CONS>, <CITATIONS>, </CITATIONS>
-- Start each pro or con point with • (bullet point)
-- Citations must be numbered sequentially [1], [2], etc. WITHOUT bullet points
-- Include citation numbers [n] at the end of each point
-- Ensure all citations are from scientific sources. inurl:'pubmed.ncbi.nlm.nih.gov', inurl:'jamanetwork.com', inurl:'ncbi.nlm.nih.gov'`;
-
     const response = await fetch('/.netlify/functions/query-perplexity', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ question: enhancedQuery })
+      body: JSON.stringify({ question })
     });
     
     if (!response.ok) {
@@ -166,11 +121,11 @@ export async function queryPerplexity(question: string): Promise<CachedAnswer> {
 
     const data = await response.json();
 
-    if (!data.choices?.[0]?.message?.content) {
+    if (!data.llm_response || !data.sources) {
       throw new Error('Invalid response format from API');
     }
 
-    const result = parsePerplexityResponse(data.choices[0].message.content);
+    const result = parseResponse(data.llm_response, data.sources);
 
     // Cache the answer asynchronously
     setTimeout(() => {

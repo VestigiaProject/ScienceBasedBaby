@@ -1,5 +1,7 @@
 import { Handler } from '@netlify/functions';
 
+const OPENPERPLEX_API_URL = 'https://api.openperplex.com/api/v1/search';
+
 export const handler: Handler = async (event) => {
   if (event.httpMethod !== 'POST') {
     return { statusCode: 405, body: 'Method Not Allowed' };
@@ -15,72 +17,48 @@ export const handler: Handler = async (event) => {
       };
     }
 
-    const response = await fetch('https://api.perplexity.ai/chat/completions', {
+    const enhancedQuery = `The user has asked something about: "${question}" Give the pros and cons after having searched answers in scientific and peer-reviewed publications exclusively, not low-quality media. Only search in sites like https://pubmed.ncbi.nlm.nih.gov/, https://jamanetwork.com/ or https://www.ncbi.nlm.nih.gov/guide/all/. 
+- CRITICAL: Format your response EXACTLY as follows, using these EXACT markers: <PROS>, </PROS>, <CONS>, </CONS>
+- Start each pro or con point with • (bullet point)
+- Include citation numbers [n] at the end of each point`;
+
+    const response = await fetch(OPENPERPLEX_API_URL, {
       method: 'POST',
       headers: {
-        'Accept': 'application/json',
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${process.env.PERPLEXITY_API_KEY}`
+        'Authorization': `Bearer ${process.env.OPENPERPLEX_API_KEY}`,
       },
       body: JSON.stringify({
-        model: 'llama-3.1-sonar-large-128k-online',
-        search_domain_filter: ['pubmed.ncbi.nlm.nih.gov', 'https://www.aap.org', 'https://jamanetwork.com/'],
-        messages: [
-          { 
-            role: 'system', 
-            content: `You are a scientific research assistant specializing in pregnancy and parenting topics. 
-For the given question, look up evidence-based information ONLY from peer-reviewed scientific studies and medical research websites.
-
-CRITICAL: Format your response EXACTLY as follows, using these EXACT markers:
-
-<PROS>
-• Each evidence-supported benefit or positive finding
-• One point per line, starting with • and citation numbers in [n]
-• If no evidence-based pros exist, include ONLY something like: • No scientifically proven benefits found
-</PROS>
-
-<CONS>
-• Each evidence-supported risk or concern
-• One point per line, starting with • and citation numbers in [n]
-• If no evidence-based cons exist, include ONLY something like: • No scientifically proven risks found
-</CONS>
-
-<CITATIONS>
-[1] First citation with DOI or URL
-[2] Second citation with DOI or URL
-[3] And so on...
-</CITATIONS>
-
-IMPORTANT:
-- Use ONLY the exact markers <PROS>, </PROS>, <CONS>, </CONS>, <CITATIONS>, </CITATIONS>
-- Start each point with • (bullet point)
-- Include citation numbers [n] at the end of each point
-- Citations must be numbered sequentially [1], [2], etc. WITHOUT bullet points
-- If no evidence exists for pros or cons, explicitly state that
-- Ensure all citations are from scientific sources`
-          },
-          { role: 'user', content: question }
-        ]
+        query: enhancedQuery,
+        location: 'us',
+        pro_mode: true,
+        response_language: 'en',
+        answer_type: 'text',
+        verbose_mode: false,
+        search_type: 'general',
+        return_citations: false,
+        return_sources: true,
+        return_images: false,
+        recency_filter: 'anytime'
       })
     });
 
     if (!response.ok) {
-      const errorData = await response.text();
-      console.error('Perplexity API Error:', errorData);
-      throw new Error(`API request failed: ${response.status} ${errorData}`);
+      throw new Error(`OpenPerplex API request failed: ${response.status}`);
     }
 
     const data = await response.json();
+
     return {
       statusCode: 200,
       body: JSON.stringify(data)
     };
   } catch (error) {
-    console.error('Perplexity API error:', error);
+    console.error('OpenPerplex API error:', error);
     return {
       statusCode: 500,
       body: JSON.stringify({ 
-        error: 'Failed to query Perplexity API',
+        error: 'Failed to query OpenPerplex API',
         details: error instanceof Error ? error.message : 'Unknown error'
       })
     };

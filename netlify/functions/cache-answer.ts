@@ -1,7 +1,7 @@
 import { Handler } from '@netlify/functions';
 import { Pinecone } from '@pinecone-database/pinecone';
 import OpenAI from 'openai';
-import { CachedAnswer } from '../types/answers';
+import { CachedAnswer, Source } from '../types/answers';
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -40,11 +40,11 @@ export const handler: Handler = async (event) => {
 
     // Serialize complex objects into strings for Pinecone metadata
     const serializedMetadata = {
-      query: query, // Store the original query
+      query: query,
       pros: answer.pros.join('|||'),
       cons: answer.cons.join('|||'),
-      citations: JSON.stringify(answer.citations),
-      timestamp: new Date().toISOString() // Also add timestamp for tracking
+      sources: JSON.stringify(answer.sources),
+      timestamp: new Date().toISOString()
     };
 
     const id = Buffer.from(query).toString('base64');
