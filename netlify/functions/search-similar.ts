@@ -1,7 +1,7 @@
 import { Handler } from '@netlify/functions';
 import { Pinecone } from '@pinecone-database/pinecone';
 import OpenAI from 'openai';
-import { CachedAnswer, Source } from '../types/answers';
+import { CachedAnswer } from '../types/answers';
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -66,7 +66,7 @@ export const handler: Handler = async (event) => {
       answer = {
         pros: metadata.pros.split('|||'),
         cons: metadata.cons.split('|||'),
-        sources: JSON.parse(metadata.sources)
+        citations: JSON.parse(metadata.citations)
       };
     }
 

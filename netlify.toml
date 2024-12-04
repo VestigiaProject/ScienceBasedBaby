@@ -15,6 +15,3 @@
   from = "/*"
   to = "/index.html"
   status = 200
-
-[template.environment]
-  OPENPERPLEX_API_KEY = "Your OpenPerplex API key"
