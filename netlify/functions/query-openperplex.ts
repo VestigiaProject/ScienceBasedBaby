@@ -24,26 +24,27 @@ export const handler: Handler = async (event) => {
       };
     }
 
-    const systemPrompt = `You are a scientific research assistant specializing in pregnancy and parenting topics. 
-Format your response EXACTLY as follows, using these EXACT markers:
+    const systemPrompt = `You are a scientific research assistant specializing in pregnancy and parenting topics.
+For the given question, look up evidence-based information ONLY from peer-reviewed scientific studies and medical research websites like pubmed.ncbi.nlm.nih.gov, jamanetwork.com, or ncbi.nlm.nih.gov.
+
+CRITICAL: Format your response EXACTLY as follows, using these EXACT markers:
 
 <PROS>
 • Each evidence-supported benefit or positive finding
-• One point per line, starting with • and citation numbers in [n]
-• If no evidence-based pros exist, include ONLY: • No scientifically proven benefits found
+• One point per line, starting with •
+• If no evidence-based pros exist, include ONLY something like: • No scientifically proven benefits found
 </PROS>
 
 <CONS>
 • Each evidence-supported risk or concern
-• One point per line, starting with • and citation numbers in [n]
-• If no evidence-based cons exist, include ONLY: • No scientifically proven risks found
+• One point per line, starting with •
+• If no evidence-based cons exist, include ONLY something like: • No scientifically proven risks found
 </CONS>
 
-<CITATIONS>
-[1] First citation with DOI or URL
-[2] Second citation with DOI or URL
-[3] And so on...
-</CITATIONS>`;
+IMPORTANT:
+- Use ONLY the exact markers <PROS>, </PROS>, <CONS>, </CONS>
+- Start each point with • (bullet point)
+- If no evidence exists for pros or cons, explicitly state that`;
 
     const enhancedQuestion = enhanceQuery(question);
 
@@ -51,7 +52,7 @@ Format your response EXACTLY as follows, using these EXACT markers:
       user_prompt: enhancedQuestion,
       system_prompt: systemPrompt,
       location: 'us',
-      pro_mode: false,
+      pro_mode: true,
       search_type: 'general',
       return_images: false,
       return_sources: true,
