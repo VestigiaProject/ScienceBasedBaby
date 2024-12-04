@@ -1,12 +1,12 @@
 import { Handler } from '@netlify/functions';
 
 export const handler: Handler = async (event) => {
-    if (event.httpMethod !== 'POST') {
+    if (event.httpMethod !== 'GET') {
         return { statusCode: 405, body: 'Method Not Allowed' };
     }
 
     try {
-        const { question } = JSON.parse(event.body || '');
+        const question = event.queryStringParameters?.question;
 
         if (!question) {
             return {
@@ -27,29 +27,20 @@ CRITICAL: Format your response EXACTLY as follows, using these EXACT markers:
 
 <PROS>
 • Each evidence-supported benefit or positive finding
-• One point per line, starting with • and citation numbers in [n]
+• One point per line, starting with •
 • If no evidence-based pros exist, include ONLY something like: • No scientifically proven benefits found
 </PROS>
 
 <CONS>
 • Each evidence-supported risk or concern
-• One point per line, starting with • and citation numbers in [n]
+• One point per line, starting with •
 • If no evidence-based cons exist, include ONLY something like: • No scientifically proven risks found
 </CONS>
 
-<CITATIONS>
-[1] First citation with DOI or URL
-[2] Second citation with DOI or URL
-[3] And so on...
-</CITATIONS>
-
 IMPORTANT:
-- Use ONLY the exact markers <PROS>, </PROS>, <CONS>, </CONS>, <CITATIONS>, </CITATIONS>
+- Use ONLY the exact markers <PROS>, </PROS>, <CONS>, </CONS>
 - Start each point with • (bullet point)
-- Include citation numbers [n] at the end of each point
-- Citations must be numbered sequentially [1], [2], etc. WITHOUT bullet points
-- If no evidence exists for pros or cons, explicitly state that
-- Ensure all citations are from scientific sources`,
+- If no evidence exists for pros or cons, explicitly state that`,
             location: 'fr',
             pro_mode: false,
             search_type: "general",
