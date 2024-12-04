@@ -1,5 +1,4 @@
 import { Handler } from '@netlify/functions';
-import { SYSTEM_PROMPT, enhanceUserPrompt } from '../../src/utils/prompts';
 
 const BASE_URL = 'https://44c57909-d9e2-41cb-9244-9cd4a443cb41.app.bhs.ai.cloud.ovh.net';
 
@@ -18,9 +17,30 @@ export const handler: Handler = async (event) => {
       };
     }
 
+    const systemPrompt = `You are a scientific research assistant specializing in pregnancy and parenting topics. 
+Format your response EXACTLY as follows, using these EXACT markers:
+
+<PROS>
+• Each evidence-supported benefit or positive finding
+• One point per line, starting with • and citation numbers in [n]
+• If no evidence-based pros exist, include ONLY: • No scientifically proven benefits found
+</PROS>
+
+<CONS>
+• Each evidence-supported risk or concern
+• One point per line, starting with • and citation numbers in [n]
+• If no evidence-based cons exist, include ONLY: • No scientifically proven risks found
+</CONS>
+
+<CITATIONS>
+[1] First citation with DOI or URL
+[2] Second citation with DOI or URL
+[3] And so on...
+</CITATIONS>`;
+
     const options = {
-      user_prompt: enhanceUserPrompt(question),
-      system_prompt: SYSTEM_PROMPT,
+      user_prompt: question,
+      system_prompt: systemPrompt,
       location: 'us',
       pro_mode: false,
       search_type: 'general',

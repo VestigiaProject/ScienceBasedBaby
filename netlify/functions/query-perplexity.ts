@@ -1,180 +1,88 @@
-import { findSimilarAnswer, cacheAnswer } from './pinecone';
-import { checkQueryRelevancy } from './openai';
-import { NotRelevantError } from './errors';
-import { CachedAnswer } from '../types/answers';
-import { doc, getDoc, setDoc } from 'firebase/firestore';
-import { auth, db } from '../config/firebase';
+import { Handler } from '@netlify/functions';
 
-const DAILY_REQUEST_LIMIT = 35;
-
-async function checkAndUpdateRequestLimit(): Promise<boolean> {
-  const user = auth.currentUser;
-  if (!user) {
-    throw new Error('User not authenticated');
+export const handler: Handler = async (event) => {
+  if (event.httpMethod !== 'POST') {
+    return { statusCode: 405, body: 'Method Not Allowed' };
   }
-  
-  const subscriptionDoc = doc(db, 'subscriptions', user.uid);
-  const subscription = await getDoc(subscriptionDoc);
-  const data = subscription.data();
-
-  if (!data) {
-    throw new Error('No subscription data found');
-  }
-
-  const now = new Date();
-  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
-  
-  const currentTracking = data.requestTracking || { requestCount: 0, date: 0 };
-
-  if (currentTracking.date !== today) {
-    await setDoc(subscriptionDoc, {
-      ...data,
-      requestTracking: {
-        requestCount: 1,
-        date: today
-      }
-    }, { merge: true });
-    return true;
-  }
-
-  if (!currentTracking.requestCount || currentTracking.requestCount < DAILY_REQUEST_LIMIT) {
-    const newCount = (currentTracking.requestCount || 0) + 1;
-    await setDoc(subscriptionDoc, {
-      ...data,
-      requestTracking: {
-        requestCount: newCount,
-        date: today
-      }
-    }, { merge: true });
-    return true;
-  }
-
-  return false;
-}
-
-function extractUrlFromCitation(citation: string): string | undefined {
-  const doiMatch = citation.match(/(?:doi:|DOI:?\s*)?(?:https?:\/\/doi\.org\/|10\.\d{4,}\/[-._;()\/:A-Z0-9]+)/i);
-  if (doiMatch) {
-    const doi = doiMatch[0].replace(/^doi:/i, '').trim();
-    return doi.startsWith('http') ? doi : `https://doi.org/${doi}`;
-  }
-
-  const pubmedMatch = citation.match(/https?:\/\/(?:www\.)?ncbi\.nlm\.nih\.gov\/pubmed\/\d+/i);
-  if (pubmedMatch) {
-    return pubmedMatch[0];
-  }
-
-  const urlMatch = citation.match(/https?:\/\/[^\s<>[\]()]+[^\s.,<>[\]()]/i);
-  if (urlMatch) {
-    return urlMatch[0];
-  }
-
-  return undefined;
-}
-
-function parsePerplexityResponse(content: string): CachedAnswer {
-  const result: CachedAnswer = {
-    pros: [],
-    cons: [],
-    citations: []
-  };
 
   try {
-    const prosMatch = content.match(/<PROS>([\s\S]*?)<\/PROS>/);
-    const consMatch = content.match(/<CONS>([\s\S]*?)<\/CONS>/);
-    const citationsMatch = content.match(/<CITATIONS>([\s\S]*?)<\/CITATIONS>/);
+    const { question } = JSON.parse(event.body || '');
 
-    if (prosMatch) {
-      result.pros = prosMatch[1]
-        .split('\n')
-        .map(line => line.trim())
-        .filter(line => line.startsWith('•'))
-        .map(line => line.substring(1).trim());
+    if (!question) {
+      return {
+        statusCode: 400,
+        body: JSON.stringify({ error: 'Question is required' })
+      };
     }
 
-    if (consMatch) {
-      result.cons = consMatch[1]
-        .split('\n')
-        .map(line => line.trim())
-        .filter(line => line.startsWith('•'))
-        .map(line => line.substring(1).trim());
-    }
-
-    if (citationsMatch) {
-      const citationLines = citationsMatch[1]
-        .split('\n')
-        .map(line => line.trim())
-        .filter(line => line && (line.startsWith('[') || line.startsWith('•')))
-        .map(line => line.startsWith('•') ? line.substring(1).trim() : line);
-
-      result.citations = citationLines.map((citation, index) => {
-        const url = extractUrlFromCitation(citation);
-        return {
-          id: index + 1,
-          text: citation.replace(/^(?:\[\d+\]|\•)\s*/, '').trim(),
-          url
-        };
-      });
-    }
-  } catch (error) {
-    throw new Error('Failed to parse response format');
-  }
-
-  if (result.pros.length === 0 && result.cons.length === 0) {
-    throw new Error('Invalid response format: no pros or cons found');
-  }
-
-  return result;
-}
-
-export async function queryPerplexity(question: string): Promise<CachedAnswer> {
-  try {
-    const { isRelevant } = await checkQueryRelevancy(question);
-    
-    if (!isRelevant) {
-      throw new NotRelevantError();
-    }
-
-    const cachedAnswer = await findSimilarAnswer(question);
-    if (cachedAnswer) {
-      return cachedAnswer;
-    }
-
-    const canMakeRequest = await checkAndUpdateRequestLimit();
-    if (!canMakeRequest) {
-      throw new Error('Daily request limit reached. Please try again tomorrow.');
-    }
-
-    const response = await fetch('/.netlify/functions/query-openperplex', {
+    const response = await fetch('https://api.perplexity.ai/chat/completions', {
       method: 'POST',
       headers: {
+        'Accept': 'application/json',
         'Content-Type': 'application/json',
+        'Authorization': `Bearer ${process.env.PERPLEXITY_API_KEY}`
       },
-      body: JSON.stringify({ question })
+      body: JSON.stringify({
+        model: 'llama-3.1-sonar-large-128k-online',
+        search_domain_filter: ['pubmed.ncbi.nlm.nih.gov', 'https://www.aap.org', 'https://jamanetwork.com/'],
+        messages: [
+          { 
+            role: 'system', 
+            content: `You are a scientific research assistant specializing in pregnancy and parenting topics. 
+For the given question, look up evidence-based information ONLY from peer-reviewed scientific studies and medical research websites.
+
+CRITICAL: Format your response EXACTLY as follows, using these EXACT markers:
+
+<PROS>
+• Each evidence-supported benefit or positive finding
+• One point per line, starting with • and citation numbers in [n]
+• If no evidence-based pros exist, include ONLY something like: • No scientifically proven benefits found
+</PROS>
+
+<CONS>
+• Each evidence-supported risk or concern
+• One point per line, starting with • and citation numbers in [n]
+• If no evidence-based cons exist, include ONLY something like: • No scientifically proven risks found
+</CONS>
+
+<CITATIONS>
+[1] First citation with DOI or URL
+[2] Second citation with DOI or URL
+[3] And so on...
+</CITATIONS>
+
+IMPORTANT:
+- Use ONLY the exact markers <PROS>, </PROS>, <CONS>, </CONS>, <CITATIONS>, </CITATIONS>
+- Start each point with • (bullet point)
+- Include citation numbers [n] at the end of each point
+- Citations must be numbered sequentially [1], [2], etc. WITHOUT bullet points
+- If no evidence exists for pros or cons, explicitly state that
+- Ensure all citations are from scientific sources`
+          },
+          { role: 'user', content: question }
+        ]
+      })
     });
-    
+
     if (!response.ok) {
-      throw new Error(`API request failed: ${response.status}`);
+      const errorData = await response.text();
+      console.error('Perplexity API Error:', errorData);
+      throw new Error(`API request failed: ${response.status} ${errorData}`);
     }
 
     const data = await response.json();
-
-    if (!data.choices?.[0]?.message?.content) {
-      throw new Error('Invalid response format from API');
-    }
-
-    const result = parsePerplexityResponse(data.choices[0].message.content);
-
-    // Cache the answer asynchronously
-    setTimeout(() => {
-      cacheAnswer(question, result).catch(() => {});
-    }, 0);
-
-    return result;
+    return {
+      statusCode: 200,
+      body: JSON.stringify(data)
+    };
   } catch (error) {
-    if (error instanceof NotRelevantError) {
-      throw error;
-    }
-    throw new Error(error instanceof Error ? error.message : 'Failed to get scientific analysis. Please try again.');
+    console.error('Perplexity API error:', error);
+    return {
+      statusCode: 500,
+      body: JSON.stringify({ 
+        error: 'Failed to query Perplexity API',
+        details: error instanceof Error ? error.message : 'Unknown error'
+      })
+    };
   }
 }
