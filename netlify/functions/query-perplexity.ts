@@ -1,6 +1,6 @@
 import { Handler } from '@netlify/functions';
 
-const OPENPERPLEX_BASE_URL = 'https://44c57909-d9e2-41cb-9244-9cd4a443cb41.app.bhs.ai.cloud.ovh.net';
+const OPENPERPLEX_API_URL = 'https://api.openperplex.com/api/v1/search';
 
 export const handler: Handler = async (event) => {
   if (event.httpMethod !== 'POST') {
@@ -22,31 +22,28 @@ export const handler: Handler = async (event) => {
 - Start each pro or con point with • (bullet point)
 - Include citation numbers [n] at the end of each point`;
 
-    const params = new URLSearchParams({
-      query: enhancedQuery,
-      location: 'us',
-      pro_mode: 'true',
-      response_language: 'en',
-      answer_type: 'text',
-      verbose_mode: 'false',
-      search_type: 'general',
-      return_citations: 'false',
-      return_sources: 'true',
-      return_images: 'false',
-      recency_filter: 'anytime'
-    });
-
-    const response = await fetch(`${OPENPERPLEX_BASE_URL}/search?${params}`, {
-      method: 'GET',
+    const response = await fetch(OPENPERPLEX_API_URL, {
+      method: 'POST',
       headers: {
-        'X-API-Key': process.env.OPENPERPLEX_API_KEY!,
-        'Content-Type': 'application/json'
-      }
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${process.env.OPENPERPLEX_API_KEY}`,
+      },
+      body: JSON.stringify({
+        query: enhancedQuery,
+        location: 'us',
+        pro_mode: true,
+        response_language: 'en',
+        answer_type: 'text',
+        verbose_mode: false,
+        search_type: 'general',
+        return_citations: false,
+        return_sources: true,
+        return_images: false,
+        recency_filter: 'anytime'
+      })
     });
 
     if (!response.ok) {
-      const errorText = await response.text();
-      console.error('OpenPerplex API error response:', errorText);
       throw new Error(`OpenPerplex API request failed: ${response.status}`);
     }
 
