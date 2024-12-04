@@ -29,25 +29,26 @@ Format your response EXACTLY as follows:
 • One point per line, starting with • and citation numbers in [n]
 </CONS>`;
 
-    const params = new URLSearchParams({
+    const options = {
       system_prompt: systemPrompt,
       user_prompt: question,
       location: 'us',
-      pro_mode: 'true',
+      pro_mode: true,
       search_type: 'general',
-      return_sources: 'true',
-      return_images: 'false',
-      temperature: '0.2',
-      top_p: '0.9',
+      return_sources: true,
+      return_images: false,
+      temperature: 0.2,
+      top_p: 0.9,
       recency_filter: 'anytime'
-    });
+    };
 
-    const response = await fetch(`${OPENPERPLEX_BASE_URL}/custom_search?${params}`, {
-      method: 'GET',
+    const response = await fetch(`${OPENPERPLEX_BASE_URL}/custom_search`, {
+      method: 'POST',
       headers: {
         'X-API-Key': process.env.OPENPERPLEX_API_KEY!,
         'Content-Type': 'application/json'
-      }
+      },
+      body: JSON.stringify(options)
     });
 
     if (!response.ok) {
